@@ -1,0 +1,14 @@
+# Personal Obsidian workspace — changes every time you close/reopen
+.obsidian/workspace.json
+.obsidian/workspace
+.obsidian/cache/
+
+# Local plugin config (sync manually if needed)
+.obsidian/plugins/*/data.json
+
+# macOS / Finder
+.DS_Store
+
+# Agent scratch / notes that shouldn't be committed
+*.bak
+*.swp
