@@ -17,6 +17,7 @@ SORT status DESC, file.name ASC
 ## Manual list
 - [[pyproject.toml]] — build/deps manifest (version cap, exact pins)
 - [[AGENTS.md]] — dev guide, contribution rubric, footprint ladder
+- [[file-review skill]] — the agent skill that automates this whole workflow
 
 ## Status legend
 - `needs-review` — mapped, not yet verified by a human
