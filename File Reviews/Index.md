@@ -21,6 +21,7 @@ SORT status DESC, file.name ASC
 - [[run_agent.py]] — AIAgent class, conversation loop, __init__ params (7,551 lines, forwarder to agent/ subpackage)
 - [[model_tools.py]] — tool orchestration: discovery, tool definitions assembly, handle_function_call dispatch (1,448 lines)
 - [[cli.py]] — interactive REPL/TUI, HermesCLI class, slash commands (18,394 lines, mixin-based)
+- [[Project Overview]] — setup summary, architecture, conventions, what was parked
 
 ## Status legend
 - `needs-review` — mapped, not yet verified by a human
