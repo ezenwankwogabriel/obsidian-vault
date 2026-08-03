@@ -18,6 +18,9 @@ SORT status DESC, file.name ASC
 - [[pyproject.toml]] — build/deps manifest (version cap, exact pins)
 - [[AGENTS.md]] — dev guide, contribution rubric, footprint ladder
 - [[file-review skill]] — the agent skill that automates this whole workflow
+- [[run_agent.py]] — AIAgent class, conversation loop, __init__ params (7,551 lines, forwarder to agent/ subpackage)
+- [[model_tools.py]] — tool orchestration: discovery, tool definitions assembly, handle_function_call dispatch (1,448 lines)
+- [[cli.py]] — interactive REPL/TUI, HermesCLI class, slash commands (18,394 lines, mixin-based)
 
 ## Status legend
 - `needs-review` — mapped, not yet verified by a human
