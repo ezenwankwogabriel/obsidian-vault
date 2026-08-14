@@ -105,7 +105,7 @@ Scaffold, auth, onboarding/dashboard, vault, Trusted Contact rename/management, 
 ## Decided-but-Not-Built (Roadmap)
 
 1. **Release-side language audit**: "recovery" → "discovery"/"guidance" across remaining surfaces
-2. **Multi-Trusted-Contact (1-of-N)**: up to 5 contacts on Premium. Any verified contact gets guided discovery access. See [[Projects/Anchora - Multi-Trusted Contact Spec]] for full implementation spec
+2. **Multi-Trusted-Contact (1-of-N)**: up to 5 contacts on Premium. Any verified contact gets guided discovery access. See [[Anchora - Multi-Trusted Contact Spec]] for full implementation spec
 3. **Documented Value feature**: optional `estimatedValue` on all 11 categories; dashboard card; batch "Update values" modal. No live price lookups, staleness, trends, or snapshot model.
 4. **Marketing site correction**: anchora.com.ng still describes superseded credential-vault model — needs alignment with record-keeping/reference-tool positioning
 
