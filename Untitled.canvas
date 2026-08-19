@@ -1,0 +1,10 @@
+{
+	"nodes":[
+		{"id":"2551b4769dbe5a0d","x":-125,"y":-30,"width":250,"height":60,"type":"text","text":""},
+		{"id":"dccb3280bd284b3b","x":-380,"y":-380,"width":250,"height":60,"type":"text","text":"Hello"},
+		{"id":"97494e0d071b9d85","x":-380,"y":-260,"width":250,"height":60,"type":"text","text":"You get what i mean right"}
+	],
+	"edges":[
+		{"id":"00658a3660462d12","fromNode":"dccb3280bd284b3b","fromSide":"bottom","toNode":"97494e0d071b9d85","toSide":"top"}
+	]
+}
