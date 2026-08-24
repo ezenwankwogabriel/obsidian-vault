@@ -2,118 +2,258 @@
 
 ## Current State
 
-Anchora logs to the database (`logs` table or similar). This works for post-mortem inspection but has critical gaps for production:
+Anchora backend is **NestJS** (not Next.js API routes). Logging currently uses NestJS's built-in `Logger` module + DB writes. The gaps:
 
-- **No real-time alerting** — you only discover errors when you query the DB
-- **DB is a SPOF for observability** — if the DB is down, logs are lost and you're blind to why
-- **No structured severity** — everything is flat rows, hard to filter by urgency
-- **No rate-limiting or dedup** — a flood of identical errors fills the table and burns DB connections
-- **No trace context** — can't tie a log line to a specific user request through the stack
+- **No real-time alerting** — errors sit in the DB until someone queries
+- **DB is a SPOF for observability** — if Postgres is down, logs are lost
+- **No structured severity routing** — everything is flat, no way to separate "investigate now" from "fine, expected"
+- **No dedup/grouping** — a flood fills the DB and burns connections
+- **No trace context** — can't follow a request through the stack
 
 ## Target Architecture
 
 ```
-Application (Next.js API routes, cron jobs, background tasks)
+NestJS Application
     │
-    ├── Structured JSON logs → stdout (Railway captures automatically)
+    ├── NestJS Logger → structured JSON → stdout (Railway captures)
     │       │
-    │       └── Railway Logs (built-in, free, 7-day retention)
+    │       └── Railway Logs (free, 7-day retention)
     │
-    ├── Error-level events → Sentry (or equivalent)
+    ├── ExceptionFilter (global) → Sentry
     │       │
-    │       └── Real-time alerts → Telegram / Email / Slack
+    │       └── Real-time alerts → Telegram
     │
-    └── DB logs (keep for business-audit events only, not system errors)
+    └── DB audit_events (business events only, not system errors)
 ```
 
 ### Why This Stack
 
 | Component | Why | Cost |
 |-----------|-----|------|
-| **Railway Logs** | Already there. `console.log` → stdout is auto-captured. 0 setup. | Free (included) |
-| **Sentry** | Industry standard for error tracking. De-duplication, release tracking, source maps, breadcrumbs. Free tier: 5K errors/month. | $0–$26/mo |
-| **pino** (logger) | Fastest Node.js JSON logger. 30% faster than Winston. Built for structured logging. | Free (OSS) |
-| **DB logs** | Keep for audit trail only: release triggers, contact acceptance, billing events. Not system errors. | Already exists |
+| **Railway Logs** | Already there. stdout is auto-captured. 0 setup. | Free |
+| **Sentry** | Error dedup, grouping, release tracking, breadcrumbs. `@sentry/nestjs` exists. | $0–$26/mo |
+| **NestJS Logger** (kept) | Already in use. Just needs config + a custom transport to ship to Sentry. No new dep. | Free |
+| **DB audit_events** | Keep for business-audit: release triggers, contact acceptance, billing. Not errors. | Already exists |
 
 ## Implementation Plan
 
-### Phase 1 — Structured Logging (1–2 hours)
+### Phase 1 — Structured Logging with NestJS Logger (1–2 hours)
 
-Replace ad-hoc `console.log` with `pino` across the codebase.
+NestJS's `Logger` is fine — no need to replace it with pino/Winston. What matters is making it output structured JSON in production.
+
+**Step 1: Custom logger service that wraps NestJS Logger**
 
 ```typescript
-// lib/logger.ts
-import pino from 'pino';
+// src/logging/structured-logger.service.ts
+import { Injectable, LoggerService, LogLevel } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 
-const isProduction = process.env.NODE_ENV === 'production';
-const isTest = process.env.NODE_ENV === 'test';
+@Injectable()
+export class StructuredLoggerService implements LoggerService {
+  private context?: string;
 
-export const logger = pino({
-  level: isProduction ? 'info' : 'debug',
-  // In production: machine-parseable JSON to stdout (Railway captures)
-  // In development: human-readable with timestamps
-  transport: isProduction || isTest
-    ? undefined
-    : {
-        target: 'pino-pretty',
-        options: { colorize: true, translateTime: 'HH:MM:ss' },
-      },
-  // Redact sensitive fields from logs
-  redact: {
-    paths: [
-      'password', 'token', 'secret', 'authorization',
-      'headers.authorization', 'headers.cookie',
-      'body.password', 'body.token',
-      'nin', 'bvn', 'selfie',  // QoreID PII
-    ],
-    censor: '[REDACTED]',
-  },
-  // Every log line gets these
-  base: {
-    env: process.env.NODE_ENV,
-    service: 'anchora-api',
-  },
+  setContext(context: string) {
+    this.context = context;
+  }
+
+  private formatMessage(level: string, message: any, optionalParams: any[]) {
+    const entry: Record<string, unknown> = {
+      timestamp: new Date().toISOString(),
+      level,
+      context: this.context,
+      message: typeof message === 'string' ? message : JSON.stringify(message),
+    };
+
+    // Flatten optionalParams into the entry (they're context objects in practice)
+    if (optionalParams.length > 0) {
+      const lastParam = optionalParams[optionalParams.length - 1];
+      if (typeof lastParam === 'object' && lastParam !== null && !(lastParam instanceof Error)) {
+        Object.assign(entry, lastParam);
+      }
+    }
+
+    return entry;
+  }
+
+  log(message: any, ...optionalParams: any[]) {
+    const entry = this.formatMessage('log', message, optionalParams);
+    console.log(JSON.stringify(entry));
+  }
+
+  error(message: any, ...optionalParams: any[]) {
+    const entry = this.formatMessage('error', message, optionalParams);
+    console.error(JSON.stringify(entry));
+
+    // Ship to Sentry if it looks like an actual error
+    const errorObj = optionalParams.find(p => p instanceof Error) as Error | undefined;
+    if (errorObj || typeof message === 'string') {
+      Sentry.withScope(scope => {
+        scope.setContext('log', entry);
+        Sentry.captureException(errorObj || new Error(message));
+      });
+    }
+  }
+
+  warn(message: any, ...optionalParams: any[]) {
+    const entry = this.formatMessage('warn', message, optionalParams);
+    console.warn(JSON.stringify(entry));
+  }
+
+  debug(message: any, ...optionalParams: any[]) {
+    const entry = this.formatMessage('debug', message, optionalParams);
+    console.debug(JSON.stringify(entry));
+  }
+
+  verbose(message: any, ...optionalParams: any[]) {
+    const entry = this.formatMessage('verbose', message, optionalParams);
+    console.debug(JSON.stringify(entry));
+  }
+}
+```
+
+**Step 2: Register it in `main.ts`**
+
+```typescript
+// src/main.ts
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { StructuredLoggerService } from './logging/structured-logger.service';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, {
+    logger: new StructuredLoggerService(),
+  });
+  // ...
+}
+bootstrap();
+```
+
+**Step 3: Usage in services — no code changes needed**
+
+NestJS Logger already works via injection. The existing pattern stays:
+
+```typescript
+// Existing pattern — keeps working, now outputs structured JSON
+constructor(private readonly logger: Logger) {}
+
+someMethod() {
+  this.logger.log(`Processing release for user ${userId}`);
+  this.logger.error('Payment webhook failed', error.stack, { userId, reference });
+}
+```
+
+The only change is `main.ts` registering the custom logger. All existing `this.logger.log()` calls automatically become structured.
+
+**Redact sensitive fields:**
+
+```typescript
+// src/logging/redact.ts
+const SENSITIVE_KEYS = [
+  'password', 'token', 'secret', 'authorization',
+  'nin', 'bvn', 'selfie', 'accessToken', 'refreshToken',
+];
+
+export function redact(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (SENSITIVE_KEYS.some(k => key.toLowerCase().includes(k.toLowerCase()))) {
+      result[key] = '[REDACTED]';
+    } else if (typeof value === 'object' && value !== null && !(value instanceof Date)) {
+      result[key] = redact(value as Record<string, unknown>);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+```
+
+### Phase 2 — Global Exception Filter + Sentry (1–2 hours)
+
+```bash
+npm install @sentry/nestjs
+```
+
+**Step 1: Initialize Sentry**
+
+```typescript
+// src/instrument.ts (auto-generated by `npx @sentry/wizard -i nestjs`)
+import * as Sentry from '@sentry/nestjs';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+  tracesSampleRate: 1.0,
+  // Ignore these — they're client errors, not bugs
+  ignoreErrors: [
+    'UnauthorizedException',
+    'NotFoundException',
+    'BadRequestException',
+    'ForbiddenException',
+  ],
 });
 ```
 
-**Usage pattern:**
+**Step 2: Global exception filter (catches everything Sentry doesn't auto-catch)**
 
 ```typescript
-// Before (current pattern — ad-hoc, mixed levels)
-console.log('User logged in', userId);
-console.error('Payment failed', error);
+// src/logging/sentry-exception.filter.ts
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 
-// After (structured, searchable)
-logger.info({ userId }, 'user authenticated');
-logger.error({ err: error, userId, reference }, 'payment webhook failed');
-logger.warn({ retries, maxRetries }, 'retrying QoreID session');
+@Catch()
+export class SentryExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse();
+    const request = ctx.getRequest();
+
+    // Don't ship 4xx to Sentry — they're client errors
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    if (status >= 500) {
+      Sentry.withScope(scope => {
+        scope.setExtra('url', request.url);
+        scope.setExtra('method', request.method);
+        scope.setExtra('userId', request.user?.id);
+        Sentry.captureException(exception);
+      });
+    }
+
+    response.status(status).json({
+      statusCode: status,
+      message:
+        exception instanceof HttpException
+          ? exception.message
+          : 'Internal server error',
+    });
+  }
+}
 ```
 
-**Key rules:**
-- First argument is always a context object (indexed for search)
-- Second argument is always a human-readable message
-- Never log: passwords, tokens, NIN, BVN, full card numbers, session cookies
-- Child loggers for subsystems:
+**Step 3: Register filter globally**
 
 ```typescript
-const billingLogger = logger.child({ component: 'billing' });
-billingLogger.info({ plan: 'PRO', userId }, 'subscription activated');
-```
+// src/main.ts
+import { SentryExceptionFilter } from './logging/sentry-exception.filter';
 
-### Phase 2 — Sentry Error Tracking (1–2 hours)
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, {
+    logger: new StructuredLoggerService(),
+  });
 
-```bash
-cd anchora && npm install @sentry/nextjs
-```
-
-```typescript
-// sentry.config.ts (or next.config.js wrapping)
-// Sentry's Next.js SDK auto-instruments:
-// - API route errors
-// - getServerSideProps / getStaticProps errors
-// - Middleware errors
-// - Unhandled promise rejections
-// - Uncaught exceptions
+  app.useGlobalFilters(new SentryExceptionFilter());
+  // ...
+}
 ```
 
 **What goes to Sentry vs. what doesn't:**
@@ -121,7 +261,7 @@ cd anchora && npm install @sentry/nextjs
 | Event | Sentry? | DB? | Railway Logs? |
 |-------|---------|-----|---------------|
 | Uncaught exception | ✅ Auto | ❌ | ✅ |
-| API route 500 | ✅ Auto | ❌ | ✅ |
+| Route 500 | ✅ Filter | ❌ | ✅ |
 | Payment failure (Paystack) | ✅ Manual | ✅ Audit | ✅ |
 | QoreID verification failure | ✅ Manual | ❌ | ✅ |
 | Cron job crash | ✅ Manual | ❌ | ✅ |
@@ -129,95 +269,76 @@ cd anchora && npm install @sentry/nextjs
 | User not found (404) | ❌ | ❌ | ✅ (debug) |
 | Validation error (400) | ❌ | ❌ | ✅ (debug) |
 | Release triggered | ❌ | ✅ Audit | ✅ (info) |
-| Contact accepted invite | ❌ | ✅ Audit | ✅ (info) |
-
-**Rule of thumb:** Sentry gets things that need a human to look at them. Not 4xx validation errors, not expected edge cases. 5xx, crashes, integration failures, data corruption.
-
-**Sentry + pino integration:**
-
-```typescript
-// lib/logger.ts (add this)
-import * as Sentry from '@sentry/nextjs';
-
-// Custom pino transport or level hook that ships ERROR+FATAL to Sentry
-export function captureException(err: Error, context?: Record<string, unknown>) {
-  Sentry.withScope((scope) => {
-    if (context) {
-      scope.setContext('details', context);
-    }
-    Sentry.captureException(err);
-  });
-  // Also log locally so Railway has it
-  logger.error({ err, ...context }, err.message);
-}
-```
+| Contact accepted | ❌ | ✅ Audit | ✅ (info) |
+| Unauthorized (401) | ❌ | ❌ | ❌ |
 
 ### Phase 3 — Real-time Alerts (30 min)
 
-Sentry → Telegram integration. Errors appear in a Telegram channel within seconds.
+Sentry → Telegram.
 
-1. Create a Telegram channel or group for alerts
-2. In Sentry: Settings → Integrations → Telegram → Connect
-3. Configure alert rules:
+1. Create a Telegram channel/group for alerts
+2. Sentry: Settings → Integrations → Telegram → Connect
+3. Configure alert rule:
 
 ```
 Alert: "Anchora Production Errors"
 Condition: New issue (first occurrence) OR issue regressed
 Priority: Immediate
-Route to: Telegram channel
+Route to: Telegram
 ```
-
-**Additional alert channels (optional):**
-- **Urgent**: Sentry issue → Telegram (instant)
-- **Digest**: Sentry weekly summary email (Sentry auto-sends this)
-- **Health check**: Railway has built-in health check + notification if service is down
 
 ### Phase 4 — Request Tracing (future, post-MVP)
 
-Add `X-Request-ID` header on every request so you can trace a single user action across all log lines and Sentry events.
+NestJS interceptor instead of Next.js middleware:
 
 ```typescript
-// middleware.ts
+// src/logging/request-id.interceptor.ts
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { v4 as uuid } from 'uuid';
+import { Logger } from '@nestjs/common';
 
-export function middleware(request: NextRequest) {
-  const requestId = request.headers.get('x-request-id') || uuid();
-  const response = NextResponse.next();
-  response.headers.set('x-request-id', requestId);
-  return response;
+@Injectable()
+export class RequestIdInterceptor implements NestInterceptor {
+  private readonly logger = new Logger('RequestId');
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const request = context.switchToHttp().getRequest();
+    const requestId = request.headers['x-request-id'] || uuid();
+    request.requestId = requestId;
+
+    this.logger.log(`→ ${request.method} ${request.url}`, { requestId });
+    return next.handle();
+  }
 }
 ```
 
-```typescript
-// In any API route:
-const requestId = headers().get('x-request-id');
-const reqLogger = logger.child({ requestId, userId: session.user.id });
-reqLogger.info('processing vault update');
-```
+Apply globally in `main.ts`:
 
-Every log line and Sentry event from the same request shares a `requestId` — grep Railway logs for one ID to see the full journey.
+```typescript
+app.useGlobalInterceptors(new RequestIdInterceptor());
+```
 
 ## What to Keep / What to Change
 
 ### Keep — DB Audit Table
 
-Rename and narrow scope. The current `logs` table becomes `audit_events`:
+Rename logs → `audit_events`, narrow scope to business events only:
 
 ```sql
 CREATE TABLE audit_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_type TEXT NOT NULL,        -- 'release.triggered', 'contact.accepted', 'billing.subscription'
-  actor_id UUID,                   -- which user caused it
-  target_id UUID,                  -- which entity was affected
-  details JSONB,                   -- machine-readable context
+  actor_id UUID,
+  target_id UUID,
+  details JSONB,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-Inserted in application code for **business-significant events only**, not system errors:
-
 ```typescript
-await db.insert(auditEvents).values({
+// Inserted only for business-significant moments, not errors
+await this.db.insert(auditEvents).values({
   eventType: 'release.triggered',
   actorId: userId,
   targetId: releaseId,
@@ -227,67 +348,51 @@ await db.insert(auditEvents).values({
 
 ### Kill — DB Error Logs
 
-Stop writing system errors, stack traces, and HTTP 500 details to the DB. Those go to Sentry + Railway Logs.
+Stop writing system errors, stack traces, HTTP 500 details to DB. Those go to Sentry + Railway Logs.
 
-### Add — Cron Job Monitoring
-
-Sentry has a "Cron Monitoring" feature. Register each cron as a monitored job:
+### Cron Job Monitoring
 
 ```typescript
-// In your cron handler (e.g., inactivity checker)
-const checkInId = Sentry.captureCheckIn({
-  monitorSlug: 'inactivity-check',
-  status: 'in_progress',
-});
+// In cron handlers (e.g., inactivity checker)
+import * as Sentry from '@sentry/nestjs';
 
-try {
-  await runInactivityCheck();
-  Sentry.captureCheckIn({
-    checkInId,
+async handleCron() {
+  const checkInId = Sentry.captureCheckIn({
     monitorSlug: 'inactivity-check',
-    status: 'ok',
+    status: 'in_progress',
   });
-} catch (err) {
-  Sentry.captureCheckIn({
-    checkInId,
-    monitorSlug: 'inactivity-check',
-    status: 'error',
-  });
-  throw err;
+
+  try {
+    await this.inactivityService.run();
+    Sentry.captureCheckIn({ checkInId, monitorSlug: 'inactivity-check', status: 'ok' });
+  } catch (err) {
+    Sentry.captureCheckIn({ checkInId, monitorSlug: 'inactivity-check', status: 'error' });
+    throw err;
+  }
 }
 ```
 
-Sentry alerts you if a cron job:
-- Crashes (error status)
-- Doesn't check in on schedule (missed heartbeat)
-- Takes longer than expected (duration threshold)
+Sentry alerts if a cron: crashes, misses its schedule, or takes too long.
 
-## Error Handling Patterns
+## Error Handling Patterns (NestJS-specific)
 
-### API Routes: Fail Loudly, Fail Early
+### Fail Loudly, Fail Early
 
 ```typescript
-// Good — specific error, logged once, Sentry gets context
-export async function POST(req: NextRequest) {
-  try {
-    const session = await getServerSession();
-    if (!session) {
-      // 401 is expected, don't alert
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+// Good — 401 is expected (no alert), 500 ships to Sentry
+async processPayment(userId: string) {
+  const user = await this.usersService.findById(userId);
+  if (!user) {
+    throw new NotFoundException('User not found'); // 404 → no Sentry
+  }
 
-    const result = await processPayment(session.user.id);
-    return NextResponse.json(result);
+  try {
+    const result = await this.paystack.charge(user, amount);
+    return result;
   } catch (err) {
-    // 500 is unexpected, alert
-    captureException(err as Error, {
-      userId: session?.user?.id,
-      endpoint: 'POST /api/billing/subscribe',
-    });
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    // 500 because Paystack failing is unexpected
+    this.logger.error('Paystack charge failed', err.stack, { userId, amount });
+    throw new InternalServerErrorException('Payment processing failed');
   }
 }
 ```
@@ -295,58 +400,58 @@ export async function POST(req: NextRequest) {
 ### Don't Catch What You Can't Handle
 
 ```typescript
-// Bad — swallows the error, no one knows it failed
+// Bad — swallows, nobody knows
 try {
-  await notifyContacts(releaseId);
+  await this.notifyContacts(releaseId);
 } catch (err) {
-  console.log('notification failed', err); // lost in stdout noise
+  this.logger.log('notification failed', err); // lost
 }
 
-// Good — let it bubble to the error boundary, Sentry catches it
-await notifyContacts(releaseId);
+// Good — let it bubble to the exception filter
+await this.notifyContacts(releaseId);
 ```
 
-### Handle at the Boundary
+### Catch at the Boundary
 
-Catch only at the edge: API route handler, cron job entry point, queue worker. Don't catch-rethrow in every function.
+One try/catch per controller method or cron handler. Don't catch-rethrow in every service method.
 
 ```typescript
-// One try/catch per route, not per function call
-export async function POST(req: NextRequest) {
+@Post('subscribe')
+async subscribe(@Body() dto: SubscribeDto, @Req() req: AuthenticatedRequest) {
   try {
-    // 20 lines of business logic — no try/catch inside
-    return NextResponse.json(await doTheThing(req));
+    return await this.billingService.subscribe(req.user.id, dto.plan);
   } catch (err) {
-    captureException(err as Error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    this.logger.error('subscribe failed', err.stack, {
+      userId: req.user.id,
+      plan: dto.plan,
+    });
+    throw new InternalServerErrorException();
   }
 }
 ```
 
 ## Implementation Order
 
-1. **Add `pino` + `lib/logger.ts`** — replace all `console.log`/`console.error` with structured logging (1–2 hrs)
-2. **Add Sentry** — `@sentry/nextjs`, auto-instruments everything (1 hr)
-3. **Wire Telegram alerts** — Sentry integration (30 min)
-4. **Narrow DB logs** — rename to `audit_events`, stop writing system errors, keep business events (1 hr)
-5. **Add cron monitoring** — register each cron with Sentry check-ins (30 min)
-6. **Add request IDs** — middleware + child loggers (optional, post-MVP)
+1. **Create `StructuredLoggerService`** — wraps NestJS Logger, outputs JSON, ships `error()` to Sentry (1 hr)
+2. **Register in `main.ts`** — one-line change, all existing `this.logger.*` calls work (5 min)
+3. **Add `@sentry/nestjs` + global exception filter** — catches unhandled exceptions (1 hr)
+4. **Wire Telegram alerts** — Sentry integration (30 min)
+5. **Narrow DB logs** → `audit_events` (1 hr)
+6. **Add cron monitoring** — Sentry check-ins per cron (30 min)
+7. **Request IDs** — interceptor (optional, post-MVP)
 
 ## Costs
 
 | Service | Free Tier | Paid Tier |
 |---------|-----------|-----------|
-| Sentry | 5K errors/mo, 1 user, 7-day history | $26/mo (50K errors, unlimited users, 90-day history) |
-| Railway Logs | Included in plan | Included |
-| pino | Free (OSS) | - |
-| Telegram alerts | Free | - |
-
-Start free, upgrade Sentry when you hit 5K errors/month (that's ~160/day — you'll know when you need it).
+| Sentry | 5K errors/mo, 1 user, 7-day history | $26/mo (50K errors, unlimited users) |
+| Railway Logs | Included | Included |
+| Telegram alerts | Free | Free |
 
 ## Pitfalls
 
-1. **Don't log PII** — pino redaction covers known fields, but `logger.info(userObject)` will leak. Always pass specific fields, never whole objects that contain user data.
-2. **Don't alert on 4xx** — 400, 401, 403, 404 are client errors, not system errors. Sentry should ignore these.
-3. **Don't create alert fatigue** — one Telegram message per unique error, not per occurrence. Sentry groups identical errors automatically.
-4. **Don't lose logs when DB is down** — the new setup logs to stdout (Railway captures even before the app fully boots). DB audit events are best-effort only.
-5. **Railway log retention is 7 days** — for longer retention, ship to an external service (Sentry keeps errors; for all logs, consider Logtail/Axiom at scale). Not needed at MVP stage.
+1. **Don't log PII** — `this.logger.log(user)` will dump the full user object. Pass specific fields only: `this.logger.log('user action', { userId: user.id })`.
+2. **Don't alert on 4xx** — 400/401/403/404 are client errors. The exception filter already routes only 5xx to Sentry.
+3. **No alert fatigue** — Sentry groups identical errors. One Telegram message per unique issue, not per occurrence.
+4. **DB-down resilience** — stdout logging survives DB outages. DB audit events are best-effort only.
+5. **Railway log retention is 7 days** — for longer, ship to Sentry (errors) or Logtail/Axiom (all logs) at scale. Not needed at MVP.
