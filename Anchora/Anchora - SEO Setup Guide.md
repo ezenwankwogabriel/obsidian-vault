@@ -12,6 +12,20 @@ This guide covers every SEO action for `anchora.com.ng`, ordered by impact. Phas
 
 All code is copy-paste ready. File paths assume the standard Next.js 14 App Router layout.
 
+### 📋 Copy decision log
+
+| Surface | Final copy | Rationale |
+|---------|-----------|-----------|
+| **On-image text** (Photopea) | "Everything you own, in one place." | Living benefit only; single line under "Anchora" |
+| **og:title** (bold share headline) | "Anchora — Everything You Own, in One Place" | Short, emotional hook |
+| **og:description** (share subtitle) | "Document every account and property you own today. Give one trusted person a clear, guided path to find it all. Free to start." | What + CTA |
+| **Twitter title** | "Anchora — Everything You Own, in One Place" | Same as og:title |
+| **Twitter description** | "Document every account and property you own today. Give one trusted person a clear, guided path to find it all." | Same as og:desc, trimmed |
+| **SERP title** | "Anchora — Everything You Own, in One Place \| Nigeria" | Keyword-forward |
+| **SERP description** | "Document your bank accounts, crypto, pensions, property, and more in one secure place. Designate a trusted person who is guided step-by-step through finding every record when the time comes. Free to start." | SEO keyword density + living benefit |
+
+**Word removed:** "vault," "legacy," "wealth," "digital financial" from all shared surfaces. These stay in the product UI if already established but never appear in the first impression.
+
 ---
 
 ## Phase 1: Search Discovery (This Week — ~2 hours)
@@ -150,7 +164,7 @@ export function OrganizationSchema() {
     url: 'https://www.anchora.com.ng',
     logo: 'https://www.anchora.com.ng/images/logo-transparent.png',
     description:
-      'Your digital financial legacy vault — document your assets and designate a trusted contact for guided discovery.',
+      'Document your accounts and property in one secure place — designate a trusted person for guided discovery.',
     foundingDate: '2025',
     areaServed: {
       '@type': 'Country',
@@ -174,7 +188,7 @@ export function WebSiteSchema() {
     url: 'https://www.anchora.com.ng',
     inLanguage: 'en-NG',
     description:
-      'Document your financial and physical assets and designate a trusted contact who is guided through discovery.',
+      'Document your bank accounts, crypto, pensions, property, and more in one secure place. Designate a trusted person who is guided step-by-step through finding every record.',
   };
 
   return (
@@ -251,57 +265,64 @@ Or check if a layout component is rendering `<meta>` without content — that wa
 
 ---
 
-### 1.6 Improved Metadata (H1 + Description + Keywords)
+### 1.6 Final Metadata (Title, Description, Keywords, OG, Twitter)
 
-Update your root layout metadata:
+This is the complete, approved metadata block — no "vault," "legacy," "wealth," or "digital financial." Paste into `app/layout.tsx`:
 
 ```ts
 export const metadata: Metadata = {
+  // ── Browser tab / SERP ──
   title: {
-    default: 'Anchora — Nigeria\'s Digital Legacy Vault | Asset Discovery & Trusted Contact Guidance',
+    default: 'Anchora — Everything You Own, in One Place | Nigeria',
     template: '%s | Anchora',
   },
   description:
-    'Document your bank accounts, crypto wallets, pensions, property, and more in one encrypted vault. Designate a trusted contact who is guided through verified discovery for every asset when the time comes. Free to start.',
+    'Document your bank accounts, crypto, pensions, property, and more in one secure place. Designate a trusted person who is guided step-by-step through finding every record when the time comes. Free to start.',
+
   keywords: [
-    'digital legacy vault Nigeria',
-    'asset documentation Nigeria',
-    'trusted contact guidance',
+    'document assets Nigeria',
+    'record keeping Nigeria',
+    'asset documentation app',
+    'trusted person guidance',
     'next of kin asset discovery',
-    'bank account documentation',
+    'bank account records Nigeria',
     'pension RSA discovery Nigeria',
-    'crypto wallet inheritance',
+    'crypto wallet records',
     'property document storage Nigeria',
-    'Nigerian estate preparation',
     'what happens to my assets when I die Nigeria',
   ],
+
   metadataBase: new URL('https://www.anchora.com.ng'),
-  alternates: {
-    canonical: '/',
-  },
+  alternates: { canonical: '/' },
+
+  // ── Open Graph (WhatsApp, Facebook, LinkedIn) ──
   openGraph: {
     type: 'website',
     siteName: 'Anchora',
-    title: 'Anchora — Your Digital Financial Legacy Vault',
+    title: 'Anchora — Everything You Own, in One Place',
     description:
-      'Document your wealth. Designate a trusted contact. Give your people a clear path forward.',
+      'Document every account and property you own today. Give one trusted person a clear, guided path to find it all. Free to start.',
     url: 'https://www.anchora.com.ng',
     images: [
       {
         url: '/images/og-default.png',
         width: 1200,
         height: 630,
-        alt: 'Anchora — Your Digital Financial Legacy Vault',
+        alt: 'Anchora — Everything you own, in one place.',
       },
     ],
   },
+
+  // ── Twitter / X ──
   twitter: {
     card: 'summary_large_image',
-    title: 'Anchora — Your Digital Financial Legacy Vault',
+    title: 'Anchora — Everything You Own, in One Place',
     description:
-      'Document your wealth. Designate a trusted contact. Give your people a clear path forward.',
+      'Document every account and property you own today. Give one trusted person a clear, guided path to find it all.',
     images: ['/images/og-default.png'],
   },
+
+  // ── Crawling ──
   robots: {
     index: true,
     follow: true,
@@ -316,13 +337,29 @@ export const metadata: Metadata = {
 };
 ```
 
+**Note on platform behavior:**
+- **WhatsApp:** uses `og:title` + `og:description` + `og:image`. Your image has "Anchora" + "Everything you own, in one place." on it already, so the title + description add context without redundancy.
+- **Twitter/X:** `summary_large_image` shows the image as a full-width card with title below it.
+- **Google SERP:** uses the `title.default` and `description`, not OG tags.
+```
+
 ---
 
-### 1.7 OG Image
+### 1.7 OG Image (Photopea)
 
-Create a 1200×630px image and save to `public/images/og-default.png`.
+You're building this in Photopea. Specs:
 
-Quick option — generate programmatically via `@vercel/og` if you want dynamic OG images later. For now, a static PNG with the Anchora logo centered on the navy background (`#1E3A8A`) with the tagline "Your Digital Financial Legacy Vault" is sufficient.
+| Element | Details |
+|---------|---------|
+| Canvas | 1200 × 630 px |
+| Background | `#1E3A8A` (navy) |
+| Logo icon | Your gold shield+keyhole+anchor PNG, centered, ~130px tall, ~120px from top |
+| Brand name | "Anchora" — white serif (DM Serif Display, or Times New Roman), 72pt, centered |
+| Tagline | "Everything you own, in one place." — white sans-serif (DM Sans, or Arial), 28pt, centered, ~16px below brand name |
+
+That's it — two text elements, one logo. No accent line, no Nigeria bar, no subtitle. The platform-rendered title + description around the image do the selling; the image carries brand + emotional hook.
+
+**Save as:** `public/images/og-default.png` → redeploy.
 
 ---
 
@@ -388,7 +425,7 @@ Create `app/pcm/page.tsx` (or `app/[locale]/page.tsx` if you prefer a proper i18
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Anchora — Your Digital Financial Legacy Vault (Nigerian Pidgin)',
+  title: 'Anchora — Everything You Own, in One Place (Nigerian Pidgin)',
   description:
     'Arrange where all your money and property dey. Put one trusted person wey go fit find everything when you no dey around.',
   alternates: {
@@ -436,7 +473,7 @@ Risk 3: "Dem go sabi how to collect dem?"
 # How It Works
 H2: "Three steps to protect wetin you get"
 
-Step 1: "Build your vault"
+Step 1: "Build your record"
 "Write down all your money and property one by one — banks, crypto, investments, pension, house, car, and more. Everything get strong lock. Na you dey control wetin enter."
 
 Step 2: "Pick your trusted person"
@@ -446,7 +483,7 @@ Step 3: "Dey active, dey in control"
 "As you dey use your account normal, you still dey active — no separate check-in needed. If Anchora no hear from you for the time wey you set, e go start careful verification process before dem see anything."
 
 # Asset Categories
-H2: "Every account. One vault."
+H2: "Every account. One place."
 Same category names, keep in English (Bank Account, Crypto Wallet, etc.) — these are proper nouns in the UI.
 
 # Inactivity Engine
@@ -512,7 +549,7 @@ Target these Nigerian search intents (each ~1,500–2,500 words):
 Each article should:
 - Target a specific long-tail keyword in the H1 and first 100 words
 - Include at least 3 internal links to other blog posts
-- End with a CTA: "Start your free vault today — 3 records free"
+- End with a CTA: "Start documenting today — 3 records free"
 - Include FAQPage structured data at the bottom
 
 ### 4.3 Blog Structured Data
@@ -605,30 +642,103 @@ Every page on anchora.com.ng should have:
 
 ---
 
-## Verification Steps
+## Post-Deploy Verification Checklist
 
-After Phase 1 implementation:
+Run through these in order after every Phase 1 deploy. Each step takes < 5 minutes.
+
+### 1. Static file checks (terminal)
 
 ```bash
-# 1. Check robots.txt
+# 1a. robots.txt — should return your rules, not 404
+curl -s https://www.anchora.com.ng/robots.txt
+
+# 1b. sitemap.xml — should return XML, not 404
+curl -s https://www.anchora.com.ng/sitemap.xml | head -5
+
+# 1c. canonical — should show www.anchora.com.ng
+curl -s https://www.anchora.com.ng | grep -o 'rel="canonical" href="[^"]*"'
+
+# 1d. structured data — should show 3 schemas in source
+curl -s https://www.anchora.com.ng | grep 'application/ld+json' | wc -l
+# Expected: 3
+```
+
+### 2. Structured data validation (browser)
+
+1. Open https://search.google.com/test/rich-results
+2. Enter: `https://www.anchora.com.ng`
+3. Confirm all 3 schemas validate:
+   - [ ] Organization (gold shield logo, "Document your accounts and property...")
+   - [ ] WebSite (inLanguage: en-NG, description present)
+   - [ ] SoftwareApplication (Free tier, NGN currency)
+
+### 3. Google Search Console
+
+1. Go to https://search.google.com/search-console
+2. Add property: `anchora.com.ng` (domain property)
+3. Verify via DNS TXT record at your domain registrar
+4. Submit `sitemap.xml`
+5. Use **URL Inspection** on homepage → **Request Indexing**
+
+### 4. Social card test
+
+1. Open https://www.opengraph.xyz and enter `anchora.com.ng`
+2. Confirm the preview shows:
+   - [ ] OG image (navy card with logo + "Everything you own, in one place.")
+   - [ ] Title: "Anchora — Everything You Own, in One Place"
+   - [ ] Description: "Document every account and property you own today..."
+
+### 5. Live platform test
+
+- [ ] Share the link in a **WhatsApp** chat — does the card preview render?
+- [ ] Post on **Twitter/X** — does the large image card appear?
+- [ ] Send in **iMessage** — does the rich preview show?
+
+### 6. Redirect check
+
+```bash
+# Ensure non-www redirects to www (or vice versa, whichever you chose)
+curl -sI https://anchora.com.ng | grep -i location
+# Should show: location: https://www.anchora.com.ng (301)
+```
+
+### 7. Lighthouse
+
+1. Chrome DevTools → Lighthouse → SEO category
+2. Target: **100**
+
+---
+
+## Verification Steps (summary)
+
+Quick curl commands after any deploy:
+
+```bash
+# 1. Robots
 curl https://www.anchora.com.ng/robots.txt
 
-# 2. Check sitemap
-curl https://www.anchora.com.ng/sitemap.xml
+# 2. Sitemap
+curl https://www.anchora.com.ng/sitemap.xml | head -5
 
-# 3. Check canonical
-curl -s https://www.anchora.com.ng | grep canonical
+# 3. Canonical
+curl -s https://www.anchora.com.ng | grep -o 'rel="canonical" href="[^"]*"'
 
-# 4. Check structured data
+# 4. Structured data
 curl -s https://www.anchora.com.ng | grep 'application/ld+json'
 
-# 5. Validate with Google's tool
+# 5. Redirect
+curl -sI https://anchora.com.ng | grep -i location
+
+# 6. Rich Results validator
 # Open: https://search.google.com/test/rich-results
 # Enter: https://www.anchora.com.ng
 
-# 6. Lighthouse SEO score
-# Open Chrome DevTools → Lighthouse → SEO category
-# Target: 100
+# 7. Social card preview
+# Open: https://www.opengraph.xyz
+# Enter: https://www.anchora.com.ng
+
+# 8. Lighthouse SEO score
+# Chrome DevTools → Lighthouse → SEO → Target: 100
 ```
 
 ---
@@ -639,11 +749,12 @@ curl -s https://www.anchora.com.ng | grep 'application/ld+json'
 |-------|------|------|--------|
 | 1 | `robots.txt` | 15 min | 🔴 Unblocks crawling |
 | 2 | `sitemap.xml` | 30 min | 🔴 Unblocks discovery |
-| 3 | Canonical + metadata | 15 min | 🔴 Prevents duplicate penalties |
-| 4 | JSON-LD schemas | 30 min | 🟠 Rich results eligibility |
-| 5 | OG image + Twitter card fix | 1 hr | 🟠 Social sharing works |
-| 6 | Google Search Console | 30 min | 🟠 Index monitoring |
-| 7 | Font crossorigin fix | 15 min | 🟢 Mobile perf |
-| 8 | Pidgin landing page | 3-4 hrs | 🔴 10× audience reach |
-| 9 | Blog + 5 articles | 2-3 days | 🟡 Content flywheel |
-| 10 | Hausa/Yoruba/Igbo pages | 2 weeks | 🟡 Full Nigerian coverage |
+| 3 | Canonical + full metadata block (vault-free copy) | 15 min | 🔴 SERP + social + duplicate prevention |
+| 4 | JSON-LD schemas (3) | 30 min | 🟠 Rich results eligibility |
+| 5 | OG image (Photopea — see 1.7 spec) | 30 min | 🟠 Social sharing renders |
+| 6 | Post-deploy verification (checklist above) | 30 min | 🔴 Confirm everything works |
+| 7 | Google Search Console + index request | 30 min | 🟠 Enters search index |
+| 8 | Font crossorigin fix | 15 min | 🟢 Mobile LCP |
+| 9 | Pidgin landing page | 3-4 hrs | 🔴 10× audience reach |
+| 10 | Blog + 5 articles | 2-3 days | 🟡 Content flywheel |
+| 11 | Hausa/Yoruba/Igbo pages | 2 weeks | 🟡 Full Nigerian coverage |
