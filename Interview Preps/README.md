@@ -2,7 +2,7 @@
 
 A structured system for acing "tell me about a time…" questions.
 
-> **Folder contents:** Behavioral prep (this file, [[Question Bank]], [[Story Bank Worksheet]]) + [[JS preps]] (JavaScript technical prep).
+> **Folder contents:** Behavioral prep (this file, [[Question Bank]], [[Story Bank Worksheet]]) + [[JS preps - var let const]] (JavaScript technical prep).
 
 ## What these questions are
 
