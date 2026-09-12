@@ -123,7 +123,7 @@ Tie a portion of compensation to a **funnel outcome** (e.g. X signups/month or w
 
 ## 9. Onboarding (hand them these, day one)
 
-1. [[Anchora]] — product quick reference + non-negotiable positioning + compliance rules
+1. [[Anchora/# Anchora — Digital Financial Legacy Vault]] — product quick reference + non-negotiable positioning + compliance rules
 2. [[Anchora - Content-to-Funnel Map]] — the funnel, pillar-to-CTA map, and measurement
 3. [[Anchora - GTM Plan (X Launch)]] — the original X strategy (pillars, cadence)
 4. Founder voice calibration (from the `building-in-public` skill, `references/founder-voice-calibration.md`)

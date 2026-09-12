@@ -24,13 +24,13 @@
 
 ## What Stays Server-Readable
 
-| Field | Why |
-|-------|-----|
-| Asset category (`bank_account`, `pension_portal`, etc.) | Needed to generate guidance instructions |
-| Institution name | Needed to generate guidance instructions |
-| `recoverySteps` / guidance template | Static text, not user data — Anchora authors this |
-| Activity timestamps, inactivity status | Operational — no sensitive content |
-| Trusted Contact email, verification status | Operational — no sensitive content |
+| Field                                                   | Why                                               |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| Asset category (`bank_account`, `pension_portal`, etc.) | Needed to generate guidance instructions          |
+| Institution name                                        | Needed to generate guidance instructions          |
+| `recoverySteps` / guidance template                     | Static text, not user data — Anchora authors this |
+| Activity timestamps, inactivity status                  | Operational — no sensitive content                |
+| Trusted Contact email, verification status              | Operational — no sensitive content                |
 
 **Result:** Anchora can generate "Contact GTBank estate desk. Bring letters of administration and valid ID." without knowing the account number or seeing attached documents.
 
@@ -161,13 +161,13 @@ Recovery Phrase
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|-----------|
-| Owner loses password AND recovery phrase | Irrecoverable. Must re-create vault. Clear warning during setup. |
-| Trusted Contact loses Share B email | Owner can re-send Share B while active. After inactivity, recovery requires Owner. |
-| Anchora server compromise | Ciphertext useless without MVK, which requires both shares. |
-| Malicious Anchora insider | Share A alone is useless (Shamir threshold = 2). |
-| Browser crypto limitations | Web Crypto API (SubtleCrypto) is mature, available in all modern browsers. No WebAssembly needed. |
+| Risk                                     | Mitigation                                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Owner loses password AND recovery phrase | Irrecoverable. Must re-create vault. Clear warning during setup.                                  |
+| Trusted Contact loses Share B email      | Owner can re-send Share B while active. After inactivity, recovery requires Owner.                |
+| Anchora server compromise                | Ciphertext useless without MVK, which requires both shares.                                       |
+| Malicious Anchora insider                | Share A alone is useless (Shamir threshold = 2).                                                  |
+| Browser crypto limitations               | Web Crypto API (SubtleCrypto) is mature, available in all modern browsers. No WebAssembly needed. |
 
 ---
 

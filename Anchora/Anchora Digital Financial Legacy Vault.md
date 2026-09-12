@@ -1,20 +1,19 @@
-# Anchora — Digital Financial Legacy Vault
 
 ## Quick Reference
 
-| Field | Value |
-|-------|-------|
-| Domain | anchora.com.ng |
-| Founder/Gabby | Gabriel (user of this assistant) |
-| Builder | Claude Code on Gabby's machine |
-| Market | Nigeria |
-| Category | Record-keeping & guided-discovery reference tool |
-| Frontend | Next.js 14 (App Router), TypeScript, Tailwind, shadcn/ui |
-| Backend | Railway (Postgres), Cloudflare R2, Redis, Paystack |
-| ID Verification | QoreID (Trusted Contact only) |
-| Encryption | Field-level at rest (vault data) |
-| Sprint (current) | Sprint 9 — Identity verification (QoreID) |
-| Sprint (next) | Sprint 10 — Admin Dashboard |
+| Field            | Value                                                    |
+| ---------------- | -------------------------------------------------------- |
+| Domain           | anchora.com.ng                                           |
+| Founder/Gabby    | Gabriel (user of this assistant)                         |
+| Builder          | Claude Code on Gabby's machine                           |
+| Market           | Nigeria                                                  |
+| Category         | Record-keeping & guided-discovery reference tool         |
+| Frontend         | Next.js 14 (App Router), TypeScript, Tailwind, shadcn/ui |
+| Backend          | Railway (Postgres), Cloudflare R2, Redis, Paystack       |
+| ID Verification  | QoreID (Trusted Contact only)                            |
+| Encryption       | Field-level at rest (vault data)                         |
+| Sprint (current) | Sprint 9 — Identity verification (QoreID)                |
+| Sprint (next)    | Sprint 10 — Admin Dashboard                              |
 
 ## Core Positioning (Non-Negotiable)
 
