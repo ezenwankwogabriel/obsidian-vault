@@ -32,13 +32,14 @@ Only the release pipeline → kms:Decrypt → ALLOWED (service role)
 
 KMS alone can't stop an admin who can deploy code or SSH into prod. So we also enforce:
 
-| Control | What it prevents |
-|---------|-----------------|
-| **No human SSH to prod** | Can't exec on the box that holds the service role |
-| **CI/CD-only deployment** | Can't push arbitrary code that calls decrypt |
-| **PR review required** | Every deploy gets a second set of eyes |
-| **CloudTrail on KMS** | Every decrypt call is logged. Alert on any call outside release pipeline hours/patterns |
-| **DB fields are ciphertext** | Even raw DB access shows encrypted blobs |
+| Control                      | What it prevents                                                                        |
+| ---------------------------- | --------------------------------------------------------------------------------------- |
+| **No human SSH to prod**     | Can't exec on the box that holds the service role                                       |
+| **CI/CD-only deployment**    | Can't push arbitrary code that calls decrypt                                            |
+| **PR review required**       | Every deploy gets a second set of eyes                                                  |
+| **CloudTrail on KMS**        | Every decrypt call is logged. Alert on any call outside release pipeline hours/patterns |
+| **DB fields are ciphertext** | Even raw DB access shows encrypted blobs                                                |
+|                              |                                                                                         |
 
 With these five controls + the KMS key policy: **no Anchora human can ever read vault contents.**
 
@@ -204,30 +205,30 @@ and auditable.
 
 ### 2.1 Now — Copy-Only Changes (No Code)
 
-| Surface | Change |
-|---------|--------|
-| Homepage security section | Replace per 1.1 above |
-| Homepage "You, and only you" | Remove — replaced with specific KMS enforcement language |
-| Homepage "100% Audit coverage" | "Complete, immutable audit trail" |
-| Homepage "human review at every stage" | Remove entirely |
-| Homepage "No legal battles" | "Clear guidance, no guessing" |
-| Homepage FAQ section | Add "Can employees see my vault?" entry |
-| Security page "Restricted vault access" | Replace per 1.2 above |
-| Security page access table | Replace per 1.2 above |
-| Privacy policy NDPR → NDPA | Update with legal counsel |
-| Privacy policy subprocessors | List them |
-| Footer / terms | Add business continuity commitment |
-| robots.txt | Allow AI crawlers (GPTBot, ClaudeBot, Google-Extended, Applebot-Extended) |
+| Surface                                 | Change                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| Homepage security section               | Replace per 1.1 above                                                     |
+| Homepage "You, and only you"            | Remove — replaced with specific KMS enforcement language                  |
+| Homepage "100% Audit coverage"          | "Complete, immutable audit trail"                                         |
+| Homepage "human review at every stage"  | Remove entirely                                                           |
+| Homepage "No legal battles"             | "Clear guidance, no guessing"                                             |
+| Homepage FAQ section                    | Add "Can employees see my vault?" entry                                   |
+| Security page "Restricted vault access" | Replace per 1.2 above                                                     |
+| Security page access table              | Replace per 1.2 above                                                     |
+| Privacy policy NDPR → NDPA              | Update with legal counsel                                                 |
+| Privacy policy subprocessors            | List them                                                                 |
+| Footer / terms                          | Add business continuity commitment                                        |
+| robots.txt                              | Allow AI crawlers (GPTBot, ClaudeBot, Google-Extended, Applebot-Extended) |
 
 ### 2.2 Before Launching Content Marketing — Infrastructure Changes
 
-| Feature | What it does | Effort |
-|---------|-------------|--------|
-| **KMS key policy: service-role-only** | Restrict the vault KMS key so ONLY the NestJS service role can call `kms:Decrypt`. Remove all human IAM principals. | Low (1 hour — Terraform/CloudFormation update) |
-| **No human SSH to prod** | Disable SSH / Session Manager access for all human IAM users. CI/CD pipeline is the only deployer. Break-glass access via temporary credential (logged, alerted). | Medium (1 day — IAM + security group changes) |
-| **CloudTrail alert on KMS decrypt** | CloudWatch alarm: any `kms:Decrypt` event triggers a notification. Baseline the expected release-pipeline pattern; alert on anomalies. | Low (1 day) |
-| **`GET /v1/account/access-log`** | Endpoint returning a user-readable log of vault data access events: timestamp, purpose (release / compliance / never), records accessed. Pulls from audit log + CloudTrail. | Low (1 day) |
-| **Published security architecture page** | `/security/architecture` — static page with KMS key policy diagram, access-control table, subprocessor list, deployment/pipeline description, penetration-test timeline. | Low (half day) |
+| Feature                                  | What it does                                                                                                                                                                | Effort                                         |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| **KMS key policy: service-role-only**    | Restrict the vault KMS key so ONLY the NestJS service role can call `kms:Decrypt`. Remove all human IAM principals.                                                         | Low (1 hour — Terraform/CloudFormation update) |
+| **No human SSH to prod**                 | Disable SSH / Session Manager access for all human IAM users. CI/CD pipeline is the only deployer. Break-glass access via temporary credential (logged, alerted).           | Medium (1 day — IAM + security group changes)  |
+| **CloudTrail alert on KMS decrypt**      | CloudWatch alarm: any `kms:Decrypt` event triggers a notification. Baseline the expected release-pipeline pattern; alert on anomalies.                                      | Low (1 day)                                    |
+| **`GET /v1/account/access-log`**         | Endpoint returning a user-readable log of vault data access events: timestamp, purpose (release / compliance / never), records accessed. Pulls from audit log + CloudTrail. | Low (1 day)                                    |
+| **Published security architecture page** | `/security/architecture` — static page with KMS key policy diagram, access-control table, subprocessor list, deployment/pipeline description, penetration-test timeline.    | Low (half day)                                 |
 
 ### 2.3 Later — Nice-to-Have
 
