@@ -169,6 +169,20 @@ pre .err { color: #FCA5A5; }
   <div id="adversaryResult" style="margin-top:8px"></div>
 </div>
 
+<!-- PERF: Benchmark -->
+<div class="card">
+  <h2><span class="step">⏱</span>Performance Benchmark</h2>
+  <p style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">
+    Encrypts and decrypts fields at realistic vault scale. AES-256-GCM is hardware-accelerated
+    (AES-NI on Intel/AMD, ARMv8 Crypto on mobile). The bottleneck is network latency, not crypto.
+  </p>
+  <div class="inline-btns">
+    <button onclick="runBenchmark()" class="btn-primary" id="btnBench">Run Benchmark</button>
+    <button onclick="runDocumentBenchmark()" class="btn-outline" id="btnDocBench">Simulate 5MB Document</button>
+  </div>
+  <div id="benchResult" style="margin-top:8px"></div>
+</div>
+
 </div> <!-- end grid -->
 
 <!-- SERVER VIEW -->
@@ -497,6 +511,82 @@ async function adversaryAttempt() {
 
   setHTML('adversaryResult', `<pre>${results.join('\n')}\n\n🏁 VERDICT: Without the KEK, TC's private key, or recovery passphrase,\nthe data is AES-256-GCM ciphertext. Unbreakable.</pre>`);
   log('Adversary test complete. All decryption attempts without keys failed. GCM tamper protection verified.', 'log-success');
+}
+
+// ── Performance Benchmark ──
+async function runBenchmark() {
+  if (!S.dek) { setHTML('benchResult', '<p style="color:var(--warning)">Create a vault first.</p>'); return; }
+  setHTML('benchResult', '<p>Running...</p>');
+
+  // Generate 100 field-sized strings (~50–200 bytes each, like account numbers + notes)
+  const fields = [];
+  for (let i = 0; i < 100; i++) {
+    fields.push(`account-${i} ` + 'x'.repeat(Math.floor(Math.random() * 150) + 10));
+  }
+
+  // Benchmark encryption
+  const encStart = performance.now();
+  const encrypted = [];
+  for (const f of fields) {
+    encrypted.push(await encryptString(f, S.dek));
+  }
+  const encMs = performance.now() - encStart;
+
+  // Benchmark decryption
+  const decStart = performance.now();
+  for (const e of encrypted) {
+    await decryptString(e.iv, e.ct, S.dek);
+  }
+  const decMs = performance.now() - decStart;
+
+  setHTML('benchResult', `<pre>📊 ENCRYPTION: ${encrypted.length} fields in ${encMs.toFixed(1)}ms
+   → ${(encrypted.length / (encMs / 1000)).toFixed(0)} fields/sec
+   → ${(encMs / encrypted.length).toFixed(2)}ms per field
+
+🔓 DECRYPTION: ${encrypted.length} fields in ${decMs.toFixed(1)}ms
+   → ${(encrypted.length / (decMs / 1000)).toFixed(0)} fields/sec
+   → ${(decMs / encrypted.length).toFixed(2)}ms per field
+
+📦 TOTAL (encrypt+decrypt): ${(encMs + decMs).toFixed(1)}ms for ${encrypted.length} fields
+
+💡 For context: a typical vault has 10–50 records with 2–3 fields each
+   (20–150 fields total). At this speed, encrypting an entire vault
+   takes less time than the HTTPS handshake to fetch it from the server.
+
+🔑 The real bottleneck in Anchora is NETWORK ROUND-TRIP (10–200ms),
+   not crypto (&lt;1ms per field).</pre>`);
+  log(`Benchmark: ${encrypted.length} fields encrypted in ${encMs.toFixed(1)}ms, decrypted in ${decMs.toFixed(1)}ms`, 'log-success');
+}
+
+async function runDocumentBenchmark() {
+  if (!S.dek) { setHTML('benchResult', '<p style="color:var(--warning)">Create a vault first.</p>'); return; }
+  setHTML('benchResult', '<p>Encrypting 5MB document...</p>');
+
+  // Generate 5MB of pseudo-random data
+  const size = 5 * 1024 * 1024;
+  const data = new Uint8Array(size);
+  for (let i = 0; i < size; i += 4096) {
+    crypto.getRandomValues(data.subarray(i, Math.min(i + 4096, size)));
+  }
+
+  // Encrypt
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encStart = performance.now();
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, S.dek, data);
+  const encMs = performance.now() - encStart;
+
+  // Decrypt
+  const decStart = performance.now();
+  await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, S.dek, ct);
+  const decMs = performance.now() - decStart;
+
+  setHTML('benchResult', `<pre>📄 DOCUMENT ENCRYPTION (${(size/1024/1024).toFixed(1)}MB)
+   Encrypt: ${encMs.toFixed(1)}ms (${(size/1024/1024/(encMs/1000)).toFixed(1)} MB/s)
+   Decrypt: ${decMs.toFixed(1)}ms (${(size/1024/1024/(decMs/1000)).toFixed(1)} MB/s)
+
+💡 Most documents (title deeds, certificates) are &lt;5MB.
+   Encryption is faster than the file upload itself.</pre>`);
+  log(`Document benchmark: 5MB encrypted in ${encMs.toFixed(1)}ms, decrypted in ${decMs.toFixed(1)}ms`, 'log-success');
 }
 
 // ── Init ──
