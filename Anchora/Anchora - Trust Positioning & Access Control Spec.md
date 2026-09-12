@@ -311,3 +311,116 @@ Document the reason if any crawler remains blocked (copyright/privacy concern).
 2. **"Human review" language:** The scoped-down "human review of release process" is still misleading next to "no human can read your vault." **Recommendation:** Remove entirely from homepage. Only mention on security page under release verification (QoreID review, not content review).
 3. **Penetration test timing:** Q4 2026 after all access controls ship, or earlier to validate claims before content marketing push?
 4. **Security architecture page detail:** Full KMS key policy snippet + IAM diagram, or high-level architectural description only? **Recommendation:** High-level with a "request full architecture document" option for enterprise/partner evaluation.
+
+---
+
+## 7. FAQ Section for Homepage / Trust Page
+
+These are the exact questions the teardown identified as missing from the site. Answers written for the current architecture (V1: KMS-enforced no-human-access). Every answer is accurate today. Answers get stronger at V2 (full zero-knowledge) — noted where.
+
+---
+
+### Product Boundaries
+
+**Q: Is Anchora a will or a replacement for a lawyer?**
+
+No. Anchora is a record-keeping and guided-discovery tool. It helps your trusted contact find your assets, but it does not replace a will, appoint an executor, grant probate, or transfer legal ownership. Your trusted contact will still need to follow each institution's legal claim process — letters of administration, probate, valid ID, and any other documents the institution requires.
+
+---
+
+**Q: Can Anchora access or move my money?**
+
+No. Anchora never holds, moves, or manages your money. It is a record of where your assets are held. Your bank accounts, investments, crypto, and property stay exactly where they are.
+
+---
+
+**Q: Does Anchora store passwords, PINs, or crypto seed phrases?**
+
+Anchora records identifying information and institutional instructions — not login credentials. You should never store passwords, PINs, or seed phrases in your vault. Anchora provides a discovery path: the institution name, the account identifier, and the steps your trusted contact should follow. They will still authenticate with the institution directly.
+
+---
+
+**Q: Where is my data stored?**
+
+Vault data is hosted on AWS infrastructure. Document files are stored in Cloudflare R2. All data is encrypted before it touches disk. Encryption keys are managed in AWS KMS, separately from the encrypted data.
+
+*(V2 upgrade: "Your data is encrypted in your browser before it reaches our servers. We never have access to the unencrypted contents.")*
+
+---
+
+### Access & Privacy
+
+**Q: Can Anchora employees see what's inside my vault?**
+
+No. The encryption keys for vault data are managed in AWS KMS. The key policy grants access exclusively to the automated release pipeline — no employee, founder, or administrator can decrypt vault contents. This is enforced at the infrastructure layer, not in application code.
+
+*(V2 upgrade: "No. Your data is encrypted in your browser. Anchora literally cannot read it — the decryption key never leaves your device.")*
+
+---
+
+**Q: Can my trusted contact see my vault before the release happens?**
+
+No. Your trusted contact is notified that they have been designated, but they cannot access your vault until the inactivity window you configured has passed and their identity has been verified. You can remove or change your trusted contact at any time.
+
+---
+
+**Q: Who can read the information inside my vault?**
+
+Only you — and, after release, your verified trusted contact. The automated release pipeline is the only system capable of decryption, and it only runs when your configured inactivity window has passed and your trusted contact's identity has been verified.
+
+---
+
+### Release & Inactivity
+
+**Q: How does Anchora know when to contact my trusted person?**
+
+You set an inactivity window: 3, 6, 12, or 18 months. Anchora tracks account activity — if no login or account activity occurs within that window, the release process begins. You are warned multiple times before anything happens. Any normal activity resets the counter immediately.
+
+---
+
+**Q: Can inactivity alone release my data?**
+
+No. Inactivity starts the process, but release requires: the inactivity window to pass, multiple warning notifications with grace periods, and independent identity verification of your trusted contact. Any activity from you at any stage cancels the process immediately.
+
+---
+
+**Q: What must my trusted contact prove?**
+
+Your trusted contact must verify their identity through QoreID, a Nigerian identity verification service that validates government-issued ID, BVN, or NIN. This is an added safeguard, not a formality.
+
+---
+
+**Q: Will my trusted contact automatically inherit the assets?**
+
+No. Anchora does not transfer ownership. Your trusted contact receives a guided discovery path: what exists, where it is held, and the steps to follow. They will still need to present the required legal documents — letters of administration, probate, valid ID — to each institution. Anchora records and guides. It does not transfer.
+
+---
+
+### Business Continuity
+
+**Q: What happens to my records if Anchora closes?**
+
+If Anchora ceases operations, you will be notified and given time to export your data. We are committed to providing at least 30 days' notice before any shutdown, during which you can download a complete export of your vault. This commitment is documented in our terms of service.
+
+---
+
+**Q: Can I export or permanently delete everything?**
+
+Yes. You can export your vault data at any time. You can also permanently delete your account and all associated records. Deletion is irreversible. We retain backup copies for a limited period as required for legal and operational reasons, after which all data is permanently destroyed.
+
+---
+
+**Q: Does Anchora work for assets outside Nigeria?**
+
+Yes. You can record assets held in any country. The guidance instructions are jurisdiction-specific where we have institutional knowledge (primarily Nigeria), but the record-keeping and trusted-contact discovery path works for assets anywhere.
+
+---
+
+### Implementation Note
+
+These answers are accurate today (V1: KMS-enforced no-human-access). When V2 (full client-side zero-knowledge) ships, answers to questions about employee access and encryption get stronger — from "no human can access" to "Anchora literally cannot access." The FAQ should be updated at that point.
+
+The FAQ should appear:
+1. As a dedicated section on the homepage (collapsed/expandable, 8-10 most important questions)
+2. In full on a dedicated `/faq` page (all questions, searchable)
+3. Linked from the security page and pricing section
