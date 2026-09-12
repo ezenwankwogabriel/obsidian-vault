@@ -207,12 +207,101 @@ New claims unlocked:
 
 ---
 
+## Passkey-Based Alternative (WebAuthn PRF)
+
+### How It Works
+
+Passkeys can do more than authentication. Via the **WebAuthn PRF extension**, a passkey can derive a deterministic symmetric key:
+
+```
+Owner creates vault → registers passkey → PRF derives Vault Encryption Key (VEK)
+    ↓
+VEK never stored anywhere. Regenerated in-browser each time owner authenticates with passkey.
+    ↓
+No password. No recovery phrase. Hardware-backed (Secure Enclave / TPM).
+```
+
+This is what Bitwarden and 1Password use for their zero-knowledge vaults.
+
+### Trusted Contact Flow (No Shamir Needed)
+
+```
+Owner designates TC → TC must register a passkey (requires notification — see below)
+    ↓
+Owner's browser: encrypts VEK with TC's passkey public key (hybrid encryption)
+    ↓
+Encrypted VEK stored on Anchora. Anchora cannot decrypt (no private key).
+    ↓
+Release triggered → Anchora delivers encrypted VEK to TC
+    ↓
+TC authenticates with passkey → browser decrypts VEK → accesses vault
+```
+
+**Advantage over Shamir:** No "Share B" to email, store, or lose. The TC's face/fingerprint IS the key. Each TC gets their own encrypted copy of VEK — natural fit for multi-TC.
+
+**Still requires notification at designation** — TC must register a passkey to receive the encrypted VEK.
+
+### Comparison
+
+| | Password + Shamir (v1) | Passkey + PRF (alternative) |
+|---|---|---|
+| Owner key derivation | Password → PBKDF2 → key | Passkey PRF → key (hardware-backed) |
+| Recovery | 12-word phrase | Passkey synced to iCloud/Google (multi-device) |
+| TC key delivery | Share B emailed | TC registers passkey → encrypted VEK stored server-side |
+| Phishing resistance | Password-phishable | Passkey cannot be phished |
+| Nigerian mobile | Works on any browser | Requires platform passkey support (growing, not universal) |
+| UX for owner | Remember password | Biometric (Face ID / fingerprint) |
+| UX for TC | Store a fragment | Register once, biometric thereafter |
+| Implementation complexity | Medium (Shamir, key derivation) | Lower (WebAuthn API handles crypto) |
+
+### Recommendation
+
+Passkey + PRF is the better architecture if Nigerian target devices support it. Simpler implementation, stronger security, better UX. Fall back to password + Shamir for devices without passkey support.
+
+---
+
+## The TC Notification Problem
+
+### Current Behavior
+
+Anchora does **not** notify Trusted Contacts at designation. The rationale: avoid alarming someone with "you've been designated as someone's death-trigger contact."
+
+### Why This Conflicts with Zero-Knowledge
+
+You cannot have zero-knowledge AND a silent contact. At some point, the TC must hold or be able to regenerate a decryption key:
+
+| Approach | When TC gets the key | Requires notification? |
+|----------|---------------------|----------------------|
+| Shamir Share B | At designation (emailed) | Yes |
+| Passkey registration | At designation (register) | Yes |
+| Delayed delivery at warning | When inactivity warning fires | Notification still happens |
+| Anchora holds full key | Never (TC gets it from Anchora at release) | No — but breaks zero-knowledge |
+
+**There is no architectural workaround.** Either Anchora holds the key (not zero-knowledge) or the TC must receive/generate a key at some point (requires contact).
+
+### Options
+
+| Option | Notification Timing | Message | Risk |
+|--------|-------------------|---------|------|
+| **A: Designate-and-notify** | Immediately | "Gabby has added you as a trusted person on Anchora. Store this access key — you'll only need it if they're unable to manage their affairs." | Minimal. Framing matters. Not "you're their death contact." |
+| **B: Silent designate, notify on warning** | When inactivity warning fires | "Gabby designated you as a trusted person. They haven't been active recently. Here's your access key." | High. The TC's email could be dead by then. Or TC has changed. Or the email goes to spam. |
+| **C: Passkey at designation, silent until release** | Immediately for registration, then silent | "Gabby has added you to Anchora. Please set up your secure access — it takes 30 seconds and you won't need it unless something happens." | Low. Passkey registration is a one-time, non-alarming action. No "key" to store or lose. |
+
+### Recommendation: Option C
+
+- **Notify at designation**, but frame it as a routine setup action, not a death trigger
+- Language: "Register your access" not "You're their beneficiary"
+- Single passkey registration. Done. Silent for months/years after
+- If the TC ignores it, re-prompt periodically (not tied to inactivity — just "complete your setup")
+
+---
+
 ## Open Questions
 
-1. **Recovery phrase UX:** 12-word BIP39 — acceptable for Nigerian professional audience? Or passphrase?
-2. **Multi-Trusted-Contact with Shamir:** Current spec = 1-of-N. With zero-knowledge, each contact needs a unique share? Or all get same Share B?
-3. **Document encryption performance:** Large PDFs (5-50MB title deeds) — encrypt client-side before upload. Acceptable latency?
-4. **Web Crypto API browser support:** Test on Opera Mini, UC Browser (Nigerian mobile market). Fallback needed?
+1. **Passkey support in Nigerian mobile browsers:** Chrome Android has full support. iOS Safari has full support. Opera Mini does NOT support WebAuthn. UC Browser — uncertain. Need to test. What's the fallback for unsupported browsers?
+2. **Passkey vs password + Shamir — which path?** Passkey is simpler and stronger but requires platform support. Shamir works everywhere but has worse UX (secrets to store).
+3. **TC notification at designation — acceptable?** Changes current "silent" policy. Worth it for zero-knowledge?
+4. **Document encryption performance:** Large PDFs (5-50MB title deeds) — encrypt client-side. Acceptable latency?
 5. **Existing user migration:** Wait for critical mass or offer immediately?
 
 ---

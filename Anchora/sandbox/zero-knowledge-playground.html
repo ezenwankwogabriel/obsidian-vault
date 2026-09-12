@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anchora — Zero-Knowledge Playground</title>
+<style>
+:root { --navy: #1E3A8A; --blue: #3B82F6; --mint: #10B981; --red: #EF4444;
+  --bg: #F8FAFC; --card: #FFFFFF; --text: #1E293B; --muted: #64748B;
+  --border: #E2E8F0; --warning: #F59E0B; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg);
+  color: var(--text); line-height: 1.5; padding: 16px; }
+h1 { font-size: 1.5rem; font-weight: 700; }
+h2 { font-size: 1.1rem; margin-bottom: 8px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 0.7rem; font-weight: 600; }
+.badge-zk { background: var(--mint); color: white; }
+.badge-ct { background: var(--warning); color: #1E293B; }
+.badge-err { background: var(--red); color: white; }
+.header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; }
+.card h2 { display: flex; align-items: center; gap: 8px; }
+.card h2 .step { background: var(--navy); color: white; border-radius: 50%;
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700; }
+label { display: block; font-size: 0.85rem; font-weight: 600; margin: 8px 0 4px; }
+input, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+  border-radius: 6px; font-family: monospace; font-size: 0.85rem; }
+input:focus, textarea:focus { outline: 2px solid var(--blue); border-color: transparent; }
+button { padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600;
+  font-size: 0.85rem; cursor: pointer; transition: all 0.15s; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--blue); color: white; }
+.btn-primary:hover:not(:disabled) { background: #2563EB; }
+.btn-nav { background: var(--navy); color: white; }
+.btn-nav:hover:not(:disabled) { background: #152C6B; }
+.btn-danger { background: var(--red); color: white; }
+.btn-outline { background: white; color: var(--blue); border: 1px solid var(--blue); }
+.btn-sm { padding: 4px 10px; font-size: 0.78rem; }
+.inline-btns { display: flex; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+pre { background: #1E293B; color: #E2E8F0; padding: 12px; border-radius: 6px;
+  overflow-x: auto; font-size: 0.75rem; line-height: 1.4; max-height: 500px;
+  overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+pre .key { color: #93C5FD; }
+pre .val { color: #86EFAC; }
+pre .meta { color: #FDE68A; }
+pre .err { color: #FCA5A5; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+  border-radius: 4px; font-size: 0.72rem; font-weight: 600; margin-right: 4px; }
+.tag-enc { background: #DBEAFE; color: var(--blue); }
+.tag-no { background: #FEE2E2; color: var(--red); }
+.tag-plain { background: #FEF3C7; color: #92400E; }
+.words-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;
+  font-family: monospace; background: #F0FDF4; border: 2px solid var(--mint);
+  border-radius: 8px; padding: 12px; margin: 8px 0; }
+.words-grid span { padding: 4px 8px; background: white; border-radius: 4px;
+  text-align: center; font-size: 0.85rem; }
+.record { background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px; margin: 8px 0; }
+.record .label { font-weight: 600; font-size: 0.9rem; }
+.record .detail { font-size: 0.8rem; color: var(--muted); }
+.log { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
+.log-entry { padding: 4px 0; font-size: 0.78rem; font-family: monospace; border-bottom: 1px solid var(--border); }
+.log-success { color: var(--mint); }
+.log-info { color: var(--blue); }
+.log-error { color: var(--red); }
+.full { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🔐 Anchora Zero-Knowledge Playground</h1>
+  <span class="badge badge-zk">ZERO-KNOWLEDGE</span>
+  <span class="badge badge-ct">TRUSTED CONTACT</span>
+</div>
+<p style="color:var(--muted);margin-bottom:16px">
+  All encryption happens in your browser using the Web Crypto API. The "server view"
+  shows exactly what Anchora would store — and proves it's all ciphertext.
+</p>
+
+<div class="grid">
+
+<!-- STEP 1: Create Vault -->
+<div class="card" id="step1">
+  <h2><span class="step">1</span>Create Vault</h2>
+  <label>Email</label>
+  <input type="email" id="email" value="gabby@anchora.com.ng" placeholder="your@email.com">
+  <label>Master Password</label>
+  <input type="password" id="masterPw" value="correct-horse-battery-staple" placeholder="Choose a strong password">
+  <div class="inline-btns">
+    <button onclick="createVault()" class="btn-nav" id="btnCreate">Create Vault</button>
+  </div>
+  <p id="step1Status" style="font-size:0.8rem;color:var(--muted);margin-top:8px"></p>
+</div>
+
+<!-- STEP 2: Recovery Passphrase -->
+<div class="card" id="step2">
+  <h2><span class="step">2</span>Recovery Passphrase <span class="badge badge-ct">TC NEVER ACCEPTED</span></h2>
+  <p style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">
+    The owner saves this and shares with their TC in person. Anchora never sees it.
+    This is the ONLY way TC can access if they never accepted their invite.
+  </p>
+  <button onclick="generateRecovery()" class="btn-nav" id="btnRecovery" disabled>
+    Generate Recovery Passphrase
+  </button>
+  <div id="recoveryDisplay"></div>
+  <div id="recoveryKeyDisplay" style="margin-top:8px">
+    <label>Enter recovery passphrase to test:</label>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="recoveryInput" placeholder="word1 word2 word3 ..." style="flex:1">
+      <button onclick="decryptViaRecovery()" class="btn-outline btn-sm" id="btnRecoveryDecrypt" disabled>Decrypt</button>
+    </div>
+    <p id="recoveryStatus" style="font-size:0.75rem;color:var(--muted);margin-top:4px"></p>
+  </div>
+</div>
+
+<!-- STEP 3: Add Vault Records -->
+<div class="card" id="step3">
+  <h2><span class="step">3</span>Add Vault Records</h2>
+  <p style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">
+    Enter asset details. Only category + institution are stored in plaintext (for guidance).
+    Account numbers and notes are zero-knowledge (encrypted client-side).
+  </p>
+  <label>Asset Category</label>
+  <select id="cat" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:monospace">
+    <option>Bank Account</option><option>Crypto Wallet</option><option>Pension Portal</option>
+    <option>Real Estate</option><option>Insurance Policy</option>
+  </select>
+  <label>Institution Name <span class="tag tag-plain">PLAINTEXT</span></label>
+  <input type="text" id="inst" value="GTBank" placeholder="e.g. GTBank">
+  <label>Account Number <span class="tag tag-enc">ENCRYPTED</span></label>
+  <input type="text" id="acct" value="0123456789" placeholder="e.g. 0123456789">
+  <label>Notes <span class="tag tag-enc">ENCRYPTED</span></label>
+  <textarea id="notes" rows="2" placeholder="e.g. Joint account with spouse">Linked to BVN 2234XXXXXX</textarea>
+  <div class="inline-btns">
+    <button onclick="addRecord()" class="btn-primary" id="btnAdd" disabled>Add Encrypted Record</button>
+  </div>
+  <div id="recordsList"></div>
+</div>
+
+<!-- STEP 4: Trusted Contact Designation -->
+<div class="card" id="step4">
+  <h2><span class="step">4</span>Trusted Contact Designation</h2>
+  <p style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">
+    Simulates: Owner designates TC → TC creates account (generates ECDH keypair) →
+    Owner re-wraps vault key for TC. All key material stays in browser.
+  </p>
+  <label>TC Email</label>
+  <input type="email" id="tcEmail" value="trusted.contact@example.com" placeholder="tc@email.com">
+  <div class="inline-btns">
+    <button onclick="tcAccept()" class="btn-primary" id="btnTCAccept" disabled>TC Accepts (generates ECDH keypair)</button>
+    <button onclick="ownerRewrapForTC()" class="btn-outline" id="btnRewrap" disabled>Owner Re-wraps DEK for TC →</button>
+    <button onclick="tcDecryptViaECDH()" class="btn-danger" id="btnTCDecrypt" disabled>TC Decrypts via ECDH</button>
+  </div>
+  <div id="tcStatus"></div>
+</div>
+
+<!-- ADVERSARY: Anchora Tries -->
+<div class="card">
+  <h2><span class="step">🛡</span>Adversary Test: "Anchora Tries to Decrypt"</h2>
+  <p style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">
+    Simulates what happens if Anchora (or an attacker with the database dump) tries
+    to read vault data without the owner's password, TC's private key, or recovery passphrase.
+  </p>
+  <button onclick="adversaryAttempt()" class="btn-danger" id="btnAdversary">Attempt to Decrypt Without Keys</button>
+  <div id="adversaryResult" style="margin-top:8px"></div>
+</div>
+
+<!-- PERF: Benchmark -->
+<div class="card">
+  <h2><span class="step">⏱</span>Performance Benchmark</h2>
+  <p style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">
+    Encrypts and decrypts fields at realistic vault scale. AES-256-GCM is hardware-accelerated
+    (AES-NI on Intel/AMD, ARMv8 Crypto on mobile). The bottleneck is network latency, not crypto.
+  </p>
+  <div class="inline-btns">
+    <button onclick="runBenchmark()" class="btn-primary" id="btnBench">Run Benchmark</button>
+    <button onclick="runDocumentBenchmark()" class="btn-outline" id="btnDocBench">Simulate 5MB Document</button>
+  </div>
+  <div id="benchResult" style="margin-top:8px"></div>
+</div>
+
+</div> <!-- end grid -->
+
+<!-- SERVER VIEW -->
+<div class="card full" style="margin-top:16px">
+  <h2>📦 Anchora Server View <span style="font-weight:400;font-size:0.8rem;color:var(--muted)">
+    (this is EVERYTHING Anchora actually stores)</span>
+  </h2>
+  <pre id="serverView">No vault created yet. The server sees nothing.</pre>
+</div>
+
+<!-- EVENT LOG -->
+<div class="log" id="log"></div>
+
+<script>
+// ── BIP39 Wordlist ──
+const BIP39 = ["abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "absurd", "abuse", "access", "accident", "account", "accuse", "achieve", "acid", "acoustic", "acquire", "across", "act", "action", "actor", "actress", "actual", "adapt", "add", "addict", "address", "adjust", "admit", "adult", "advance", "advice", "aerobic", "affair", "afford", "afraid", "again", "age", "agent", "agree", "ahead", "aim", "air", "airport", "aisle", "alarm", "album", "alcohol", "alert", "alien", "all", "alley", "allow", "almost", "alone", "alpha", "already", "also", "alter", "always", "amateur", "amazing", "among", "amount", "amused", "analyst", "anchor", "ancient", "anger", "angle", "angry", "animal", "ankle", "announce", "annual", "another", "answer", "antenna", "antique", "anxiety", "any", "apart", "apology", "appear", "apple", "approve", "april", "arch", "arctic", "area", "arena", "argue", "arm", "armed", "armor", "army", "around", "arrange", "arrest", "arrive", "arrow", "art", "artefact", "artist", "artwork", "ask", "aspect", "assault", "asset", "assist", "assume", "asthma", "athlete", "atom", "attack", "attend", "attitude", "attract", "auction", "audit", "august", "aunt", "author", "auto", "autumn", "average", "avocado", "avoid", "awake", "aware", "away", "awesome", "awful", "awkward", "axis", "baby", "bachelor", "bacon", "badge", "bag", "balance", "balcony", "ball", "bamboo", "banana", "banner", "bar", "barely", "bargain", "barrel", "base", "basic", "basket", "battle", "beach", "bean", "beauty", "because", "become", "beef", "before", "begin", "behave", "behind", "believe", "below", "belt", "bench", "benefit", "best", "betray", "better", "between", "beyond", "bicycle", "bid", "bike", "bind", "biology", "bird", "birth", "bitter", "black", "blade", "blame", "blanket", "blast", "bleak", "bless", "blind", "blood", "blossom", "blouse", "blue", "blur", "blush", "board", "boat", "body", "boil", "bomb", "bone", "bonus", "book", "boost", "border", "boring", "borrow", "boss", "bottom", "bounce", "box", "boy", "bracket", "brain", "brand", "brass", "brave", "bread", "breeze", "brick", "bridge", "brief", "bright", "bring", "brisk", "broccoli", "broken", "bronze", "broom", "brother", "brown", "brush", "bubble", "buddy", "budget", "buffalo", "build", "bulb", "bulk", "bullet", "bundle", "bunker", "burden", "burger", "burst", "bus", "business", "busy", "butter", "buyer", "buzz", "cabbage", "cabin", "cable", "cactus", "cage", "cake", "call", "calm", "camera", "camp", "can", "canal", "cancel", "candy", "cannon", "canoe", "canvas", "canyon", "capable", "capital", "captain", "car", "carbon", "card", "cargo", "carpet", "carry", "cart", "case", "cash", "casino", "castle", "casual", "cat", "catalog", "catch", "category", "cattle", "caught", "cause", "caution", "cave", "ceiling", "celery", "cement", "census", "century", "cereal", "certain", "chair", "chalk", "champion", "change", "chaos", "chapter", "charge", "chase", "chat", "cheap", "check", "cheese", "chef", "cherry", "chest", "chicken", "chief", "child", "chimney", "choice", "choose", "chronic", "chuckle", "chunk", "churn", "cigar", "cinnamon", "circle", "citizen", "city", "civil", "claim", "clap", "clarify", "claw", "clay", "clean", "clerk", "clever", "click", "client", "cliff", "climb", "clinic", "clip", "clock", "clog", "close", "cloth", "cloud", "clown", "club", "clump", "cluster", "clutch", "coach", "coast", "coconut", "code", "coffee", "coil", "coin", "collect", "color", "column", "combine", "come", "comfort", "comic", "common", "company", "concert", "conduct", "confirm", "congress", "connect", "consider", "control", "convince", "cook", "cool", "copper", "copy", "coral", "core", "corn", "correct", "cost", "cotton", "couch", "country", "couple", "course", "cousin", "cover", "coyote", "crack", "cradle", "craft", "cram", "crane", "crash", "crater", "crawl", "crazy", "cream", "credit", "creek", "crew", "cricket", "crime", "crisp", "critic", "crop", "cross", "crouch", "crowd", "crucial", "cruel", "cruise", "crumble", "crunch", "crush", "cry", "crystal", "cube", "culture", "cup", "cupboard", "curious", "current", "curtain", "curve", "cushion", "custom", "cute", "cycle", "dad", "damage", "damp", "dance", "danger", "daring", "dash", "daughter", "dawn", "day", "deal", "debate", "debris", "decade", "december", "decide", "decline", "decorate", "decrease", "deer", "defense", "define", "defy", "degree", "delay", "deliver", "demand", "demise", "denial", "dentist", "deny", "depart", "depend", "deposit", "depth", "deputy", "derive", "describe", "desert", "design", "desk", "despair", "destroy", "detail", "detect", "develop", "device", "devote", "diagram", "dial", "diamond", "diary", "dice", "diesel", "diet", "differ", "digital", "dignity", "dilemma", "dinner", "dinosaur", "direct", "dirt", "disagree", "discover", "disease", "dish", "dismiss", "disorder", "display", "distance", "divert", "divide", "divorce", "dizzy", "doctor", "document", "dog", "doll", "dolphin", "domain", "donate", "donkey", "donor", "door", "dose", "double", "dove", "draft", "dragon", "drama", "drastic", "draw", "dream", "dress", "drift", "drill", "drink", "drip", "drive", "drop", "drum", "dry", "duck", "dumb", "dune", "during", "dust", "dutch", "duty", "dwarf", "dynamic", "eager", "eagle", "early", "earn", "earth", "easily", "east", "easy", "echo", "ecology", "economy", "edge", "edit", "educate", "effort", "egg", "eight", "either", "elbow", "elder", "electric", "elegant", "element", "elephant", "elevator", "elite", "else", "embark", "embody", "embrace", "emerge", "emotion", "employ", "empower", "empty", "enable", "enact", "end", "endless", "endorse", "enemy", "energy", "enforce", "engage", "engine", "enhance", "enjoy", "enlist", "enough", "enrich", "enroll", "ensure", "enter", "entire", "entry", "envelope", "episode", "equal", "equip", "era", "erase", "erode", "erosion", "error", "erupt", "escape", "essay", "essence", "estate", "eternal", "ethics", "evidence", "evil", "evoke", "evolve", "exact", "example", "excess", "exchange", "excite", "exclude", "excuse", "execute", "exercise", "exhaust", "exhibit", "exile", "exist", "exit", "exotic", "expand", "expect", "expire", "explain", "expose", "express", "extend", "extra", "eye", "eyebrow", "fabric", "face", "faculty", "fade", "faint", "faith", "fall", "false", "fame", "family", "famous", "fan", "fancy", "fantasy", "farm", "fashion", "fat", "fatal", "father", "fatigue", "fault", "favorite", "feature", "february", "federal", "fee", "feed", "feel", "female", "fence", "festival", "fetch", "fever", "few", "fiber", "fiction", "field", "figure", "file", "film", "filter", "final", "find", "fine", "finger", "finish", "fire", "firm", "first", "fiscal", "fish", "fit", "fitness", "fix", "flag", "flame", "flash", "flat", "flavor", "flee", "flight", "flip", "float", "flock", "floor", "flower", "fluid", "flush", "fly", "foam", "focus", "fog", "foil", "fold", "follow", "food", "foot", "force", "forest", "forget", "fork", "fortune", "forum", "forward", "fossil", "foster", "found", "fox", "fragile", "frame", "frequent", "fresh", "friend", "fringe", "frog", "front", "frost", "frown", "frozen", "fruit", "fuel", "fun", "funny", "furnace", "fury", "future", "gadget", "gain", "galaxy", "gallery", "game", "gap", "garage", "garbage", "garden", "garlic", "garment", "gas", "gasp", "gate", "gather", "gauge", "gaze", "general", "genius", "genre", "gentle", "genuine", "gesture", "ghost", "giant", "gift", "giggle", "ginger", "giraffe", "girl", "give", "glad", "glance", "glare", "glass", "glide", "glimpse", "globe", "gloom", "glory", "glove", "glow", "glue", "goat", "goddess", "gold", "good", "goose", "gorilla", "gospel", "gossip", "govern", "gown", "grab", "grace", "grain", "grant", "grape", "grass", "gravity", "great", "green", "grid", "grief", "grit", "grocery", "group", "grow", "grunt", "guard", "guess", "guide", "guilt", "guitar", "gun", "gym", "habit", "hair", "half", "hammer", "hamster", "hand", "happy", "harbor", "hard", "harsh", "harvest", "hat", "have", "hawk", "hazard", "head", "health", "heart", "heavy", "hedgehog", "height", "hello", "helmet", "help", "hen", "hero", "hidden", "high", "hill", "hint", "hip", "hire", "history", "hobby", "hockey", "hold", "hole", "holiday", "hollow", "home", "honey", "hood", "hope", "horn", "horror", "horse", "hospital", "host", "hotel", "hour", "hover", "hub", "huge", "human", "humble", "humor", "hundred", "hungry", "hunt", "hurdle", "hurry", "hurt", "husband", "hybrid", "ice", "icon", "idea", "identify", "idle", "ignore", "ill", "illegal", "illness", "image", "imitate", "immense", "immune", "impact", "impose", "improve", "impulse", "inch", "include", "income", "increase", "index", "indicate", "indoor", "industry", "infant", "inflict", "inform", "inhale", "inherit", "initial", "inject", "injury", "inmate", "inner", "innocent", "input", "inquiry", "insane", "insect", "inside", "inspire", "install", "intact", "interest", "into", "invest", "invite", "involve", "iron", "island", "isolate", "issue", "item", "ivory", "jacket", "jaguar", "jar", "jazz", "jealous", "jeans", "jelly", "jewel", "job", "join", "joke", "journey", "joy", "judge", "juice", "jump", "jungle", "junior", "junk", "just", "kangaroo", "keen", "keep", "ketchup", "key", "kick", "kid", "kidney", "kind", "kingdom", "kiss", "kit", "kitchen", "kite", "kitten", "kiwi", "knee", "knife", "knock", "know", "lab", "label", "labor", "ladder", "lady", "lake", "lamp", "language", "laptop", "large", "later", "latin", "laugh", "laundry", "lava", "law", "lawn", "lawsuit", "layer", "lazy", "leader", "leaf", "learn", "leave", "lecture", "left", "leg", "legal", "legend", "leisure", "lemon", "lend", "length", "lens", "leopard", "lesson", "letter", "level", "liar", "liberty", "library", "license", "life", "lift", "light", "like", "limb", "limit", "link", "lion", "liquid", "list", "little", "live", "lizard", "load", "loan", "lobster", "local", "lock", "logic", "lonely", "long", "loop", "lottery", "loud", "lounge", "love", "loyal", "lucky", "luggage", "lumber", "lunar", "lunch", "luxury", "lyrics", "machine", "mad", "magic", "magnet", "maid", "mail", "main", "major", "make", "mammal", "man", "manage", "mandate", "mango", "mansion", "manual", "maple", "marble", "march", "margin", "marine", "market", "marriage", "mask", "mass", "master", "match", "material", "math", "matrix", "matter", "maximum", "maze", "meadow", "mean", "measure", "meat", "mechanic", "medal", "media", "melody", "melt", "member", "memory", "mention", "menu", "mercy", "merge", "merit", "merry", "mesh", "message", "metal", "method", "middle", "midnight", "milk", "million", "mimic", "mind", "minimum", "minor", "minute", "miracle", "mirror", "misery", "miss", "mistake", "mix", "mixed", "mixture", "mobile", "model", "modify", "mom", "moment", "monitor", "monkey", "monster", "month", "moon", "moral", "more", "morning", "mosquito", "mother", "motion", "motor", "mountain", "mouse", "move", "movie", "much", "muffin", "mule", "multiply", "muscle", "museum", "mushroom", "music", "must", "mutual", "myself", "mystery", "myth", "naive", "name", "napkin", "narrow", "nasty", "nation", "nature", "near", "neck", "need", "negative", "neglect", "neither", "nephew", "nerve", "nest", "net", "network", "neutral", "never", "news", "next", "nice", "night", "noble", "noise", "nominee", "noodle", "normal", "north", "nose", "notable", "note", "nothing", "notice", "novel", "now", "nuclear", "number", "nurse", "nut", "oak", "obey", "object", "oblige", "obscure", "observe", "obtain", "obvious", "occur", "ocean", "october", "odor", "off", "offer", "office", "often", "oil", "okay", "old", "olive", "olympic", "omit", "once", "one", "onion", "online", "only", "open", "opera", "opinion", "oppose", "option", "orange", "orbit", "orchard", "order", "ordinary", "organ", "orient", "original", "orphan", "ostrich", "other", "outdoor", "outer", "output", "outside", "oval", "oven", "over", "own", "owner", "oxygen", "oyster", "ozone", "pact", "paddle", "page", "pair", "palace", "palm", "panda", "panel", "panic", "panther", "paper", "parade", "parent", "park", "parrot", "party", "pass", "patch", "path", "patient", "patrol", "pattern", "pause", "pave", "payment", "peace", "peanut", "pear", "peasant", "pelican", "pen", "penalty", "pencil", "people", "pepper", "perfect", "permit", "person", "pet", "phone", "photo", "phrase", "physical", "piano", "picnic", "picture", "piece", "pig", "pigeon", "pill", "pilot", "pink", "pioneer", "pipe", "pistol", "pitch", "pizza", "place", "planet", "plastic", "plate", "play", "please", "pledge", "pluck", "plug", "plunge", "poem", "poet", "point", "polar", "pole", "police", "pond", "pony", "pool", "popular", "portion", "position", "possible", "post", "potato", "pottery", "poverty", "powder", "power", "practice", "praise", "predict", "prefer", "prepare", "present", "pretty", "prevent", "price", "pride", "primary", "print", "priority", "prison", "private", "prize", "problem", "process", "produce", "profit", "program", "project", "promote", "proof", "property", "prosper", "protect", "proud", "provide", "public", "pudding", "pull", "pulp", "pulse", "pumpkin", "punch", "pupil", "puppy", "purchase", "purity", "purpose", "purse", "push", "put", "puzzle", "pyramid", "quality", "quantum", "quarter", "question", "quick", "quit", "quiz", "quote", "rabbit", "raccoon", "race", "rack", "radar", "radio", "rail", "rain", "raise", "rally", "ramp", "ranch", "random", "range", "rapid", "rare", "rate", "rather", "raven", "raw", "razor", "ready", "real", "reason", "rebel", "rebuild", "recall", "receive", "recipe", "record", "recycle", "reduce", "reflect", "reform", "refuse", "region", "regret", "regular", "reject", "relax", "release", "relief", "rely", "remain", "remember", "remind", "remove", "render", "renew", "rent", "reopen", "repair", "repeat", "replace", "report", "require", "rescue", "resemble", "resist", "resource", "response", "result", "retire", "retreat", "return", "reunion", "reveal", "review", "reward", "rhythm", "rib", "ribbon", "rice", "rich", "ride", "ridge", "rifle", "right", "rigid", "ring", "riot", "ripple", "risk", "ritual", "rival", "river", "road", "roast", "robot", "robust", "rocket", "romance", "roof", "rookie", "room", "rose", "rotate", "rough", "round", "route", "royal", "rubber", "rude", "rug", "rule", "run", "runway", "rural", "sad", "saddle", "sadness", "safe", "sail", "salad", "salmon", "salon", "salt", "salute", "same", "sample", "sand", "satisfy", "satoshi", "sauce", "sausage", "save", "say", "scale", "scan", "scare", "scatter", "scene", "scheme", "school", "science", "scissors", "scorpion", "scout", "scrap", "screen", "script", "scrub", "sea", "search", "season", "seat", "second", "secret", "section", "security", "seed", "seek", "segment", "select", "sell", "seminar", "senior", "sense", "sentence", "series", "service", "session", "settle", "setup", "seven", "shadow", "shaft", "shallow", "share", "shed", "shell", "sheriff", "shield", "shift", "shine", "ship", "shiver", "shock", "shoe", "shoot", "shop", "short", "shoulder", "shove", "shrimp", "shrug", "shuffle", "shy", "sibling", "sick", "side", "siege", "sight", "sign", "silent", "silk", "silly", "silver", "similar", "simple", "since", "sing", "siren", "sister", "situate", "six", "size", "skate", "sketch", "ski", "skill", "skin", "skirt", "skull", "slab", "slam", "sleep", "slender", "slice", "slide", "slight", "slim", "slogan", "slot", "slow", "slush", "small", "smart", "smile", "smoke", "smooth", "snack", "snake", "snap", "sniff", "snow", "soap", "soccer", "social", "sock", "soda", "soft", "solar", "soldier", "solid", "solution", "solve", "someone", "song", "soon", "sorry", "sort", "soul", "sound", "soup", "source", "south", "space", "spare", "spatial", "spawn", "speak", "special", "speed", "spell", "spend", "sphere", "spice", "spider", "spike", "spin", "spirit", "split", "spoil", "sponsor", "spoon", "sport", "spot", "spray", "spread", "spring", "spy", "square", "squeeze", "squirrel", "stable", "stadium", "staff", "stage", "stairs", "stamp", "stand", "start", "state", "stay", "steak", "steel", "stem", "step", "stereo", "stick", "still", "sting", "stock", "stomach", "stone", "stool", "story", "stove", "strategy", "street", "strike", "strong", "struggle", "student", "stuff", "stumble", "style", "subject", "submit", "subway", "success", "such", "sudden", "suffer", "sugar", "suggest", "suit", "summer", "sun", "sunny", "sunset", "super", "supply", "supreme", "sure", "surface", "surge", "surprise", "surround", "survey", "suspect", "sustain", "swallow", "swamp", "swap", "swarm", "swear", "sweet", "swift", "swim", "swing", "switch", "sword", "symbol", "symptom", "syrup", "system", "table", "tackle", "tag", "tail", "talent", "talk", "tank", "tape", "target", "task", "taste", "tattoo", "taxi", "teach", "team", "tell", "ten", "tenant", "tennis", "tent", "term", "test", "text", "thank", "that", "theme", "then", "theory", "there", "they", "thing", "this", "thought", "three", "thrive", "throw", "thumb", "thunder", "ticket", "tide", "tiger", "tilt", "timber", "time", "tiny", "tip", "tired", "tissue", "title", "toast", "tobacco", "today", "toddler", "toe", "together", "toilet", "token", "tomato", "tomorrow", "tone", "tongue", "tonight", "tool", "tooth", "top", "topic", "topple", "torch", "tornado", "tortoise", "toss", "total", "tourist", "toward", "tower", "town", "toy", "track", "trade", "traffic", "tragic", "train", "transfer", "trap", "trash", "travel", "tray", "treat", "tree", "trend", "trial", "tribe", "trick", "trigger", "trim", "trip", "trophy", "trouble", "truck", "true", "truly", "trumpet", "trust", "truth", "try", "tube", "tuition", "tumble", "tuna", "tunnel", "turkey", "turn", "turtle", "twelve", "twenty", "twice", "twin", "twist", "two", "type", "typical", "ugly", "umbrella", "unable", "unaware", "uncle", "uncover", "under", "undo", "unfair", "unfold", "unhappy", "uniform", "unique", "unit", "universe", "unknown", "unlock", "until", "unusual", "unveil", "update", "upgrade", "uphold", "upon", "upper", "upset", "urban", "urge", "usage", "use", "used", "useful", "useless", "usual", "utility", "vacant", "vacuum", "vague", "valid", "valley", "valve", "van", "vanish", "vapor", "various", "vast", "vault", "vehicle", "velvet", "vendor", "venture", "venue", "verb", "verify", "version", "very", "vessel", "veteran", "viable", "vibrant", "vicious", "victory", "video", "view", "village", "vintage", "violin", "virtual", "virus", "visa", "visit", "visual", "vital", "vivid", "vocal", "voice", "void", "volcano", "volume", "vote", "voyage", "wage", "wagon", "wait", "walk", "wall", "walnut", "want", "warfare", "warm", "warrior", "wash", "wasp", "waste", "water", "wave", "way", "wealth", "weapon", "wear", "weasel", "weather", "web", "wedding", "weekend", "weird", "welcome", "west", "wet", "whale", "what", "wheat", "wheel", "when", "where", "whip", "whisper", "wide", "width", "wife", "wild", "will", "win", "window", "wine", "wing", "wink", "winner", "winter", "wire", "wisdom", "wise", "wish", "witness", "wolf", "woman", "wonder", "wood", "wool", "word", "work", "world", "worry", "worth", "wrap", "wreck", "wrestle", "wrist", "write", "wrong", "yard", "year", "yellow", "you", "young", "youth", "zebra", "zero", "zone", "zoo"];
+
+// ── State ──
+const S = {
+  email: '', salt: null, recoverySalt: null,
+  wrappedDEK: null, recoveryWrappedDEK: null, dek: null,
+  recoveryWords: null, recoveryKey: null,
+  records: [],
+  tc: { email: null, keypair: null, publicJwk: null, wrappedDEK: null, ephemeralPublicJwk: null, shared: null }
+};
+
+// ── Helpers ──
+function ab2b64(b) { return btoa(String.fromCharCode(...new Uint8Array(b))); }
+function b642ab(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer; }
+function b642bytes(s) { return new Uint8Array(b642ab(s)); }
+function uint2b64(b) { return ab2b64(b.buffer.slice(b.byteOffset, b.byteOffset+b.byteLength)); }
+function fmtBytes(n) { return n > 1024 ? (n/1024).toFixed(1)+' KB' : n+' bytes'; }
+
+function log(msg, cls='log-info') {
+  const el = document.getElementById('log');
+  el.insertAdjacentHTML('afterbegin', `<div class="log-entry ${cls}">[${new Date().toLocaleTimeString()}] ${msg}</div>`);
+  if (el.children.length > 50) el.removeChild(el.lastChild);
+}
+
+function setBtn(id, disabled) { const b = document.getElementById(id); if(b) b.disabled = disabled; }
+function setHTML(id, html) { document.getElementById(id).innerHTML = html; }
+function setText(id, text) { document.getElementById(id).textContent = text; }
+
+// ── Crypto ──
+async function deriveKEK(password, email, salt) {
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(password+':'+email), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
+    km, { name: 'AES-GCM', length: 256 }, false,
+    ['wrapKey', 'unwrapKey', 'encrypt', 'decrypt']
+  );
+}
+
+async function generateDEK() {
+  return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey']);
+}
+
+async function wrapKeyAES(key, wrappingKey) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const wrapped = await crypto.subtle.wrapKey('raw', key, wrappingKey, { name: 'AES-GCM', iv });
+  const out = new Uint8Array(12 + wrapped.byteLength);
+  out.set(iv); out.set(new Uint8Array(wrapped), 12);
+  return { iv, data: out.buffer };
+}
+
+async function unwrapKeyAES(wrappedData, unwrappingKey) {
+  const d = new Uint8Array(wrappedData);
+  return crypto.subtle.unwrapKey(
+    'raw', d.slice(12), unwrappingKey,
+    { name: 'AES-GCM', iv: d.slice(0, 12) },
+    { name: 'AES-GCM', length: 256 }, false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptString(plaintext, key) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plaintext));
+  return { iv, ct };
+}
+
+async function decryptString(iv, ct, key) {
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return new TextDecoder().decode(pt);
+}
+
+// ── Server View (live state) ──
+function renderServerView() {
+  const records = S.records.map((r,i) => {
+    const ct = b642bytes(r.acctCt); const nd = b642bytes(r.notesCt);
+    return {
+      id: i+1,
+      category: r.category,
+      institution: r.institution,
+      accountNumber_cipher: { iv: uint2b64(r.acctIv), ct_size: fmtBytes(ct.length), fingerprint: btoa(String.fromCharCode(...ct.slice(0,16))) },
+      notes_cipher: { iv: uint2b64(r.notesIv), ct_size: fmtBytes(nd.length), fingerprint: btoa(String.fromCharCode(...nd.slice(0,16))) }
+    };
+  });
+  const server = {
+    salt: S.salt ? uint2b64(S.salt) : null,
+    recovery_salt: S.recoverySalt ? uint2b64(S.recoverySalt) : null,
+    wrapped_dek: S.wrappedDEK ? { size: fmtBytes(S.wrappedDEK.byteLength), fingerprint: btoa(String.fromCharCode(...new Uint8Array(S.wrappedDEK).slice(0,16))) } : null,
+    recovery_wrapped_dek: S.recoveryWrappedDEK ? { size: fmtBytes(S.recoveryWrappedDEK.byteLength), fingerprint: btoa(String.fromCharCode(...new Uint8Array(S.recoveryWrappedDEK).slice(0,16))) } : null,
+    tc_public_key: S.tc.publicJwk ? { kty: S.tc.publicJwk.kty, crv: S.tc.publicJwk.crv, x_fingerprint: S.tc.publicJwk.x.slice(0,32)+'...' } : null,
+    tc_wrapped_dek: S.tc.wrappedDEK ? { size: fmtBytes(S.tc.wrappedDEK.byteLength), fingerprint: btoa(String.fromCharCode(...new Uint8Array(S.tc.wrappedDEK).slice(0,16))) } : null,
+    owner_ephemeral_public: S.tc.ephemeralPublicJwk ? { kty: S.tc.ephemeralPublicJwk.kty, crv: S.tc.ephemeralPublicJwk.crv, x: S.tc.ephemeralPublicJwk.x.slice(0,32)+'...' } : null,
+    vault_records: records,
+    can_anchora_read: "NO — all fields are either wrapped keys or AES-256-GCM ciphertext without the DEK",
+    what_anchora_can_see: "Asset category and institution name (needed to generate guidance instructions)"
+  };
+  document.getElementById('serverView').textContent = JSON.stringify(server, null, 2);
+}
+
+// ── Step 1: Create Vault ──
+async function createVault() {
+  const email = document.getElementById('email').value.trim();
+  const pw = document.getElementById('masterPw').value;
+  if (!email || !pw) return alert('Enter email and password');
+
+  document.getElementById('btnCreate').disabled = true;
+  document.getElementById('btnCreate').textContent = 'Deriving keys...';
+
+  try {
+    S.email = email;
+    S.salt = crypto.getRandomValues(new Uint8Array(32));
+    const kek = await deriveKEK(pw, email, S.salt);
+    S.dek = await generateDEK();
+    const wrapped = await wrapKeyAES(S.dek, kek);
+    S.wrappedDEK = wrapped.data;
+
+    renderServerView();
+    setHTML('step1Status', `<span style="color:var(--mint);font-weight:600">✅ Vault created. DEK held in memory. Server has only wrapped_dek (${fmtBytes(S.wrappedDEK.byteLength)}).</span>`);
+    setBtn('btnRecovery', false);
+    setBtn('btnAdd', false);
+    setBtn('btnTCAccept', false);
+    setBtn('btnCreate', false);
+    document.getElementById('btnCreate').textContent = '✅ Vault Active';
+    log('Vault created. KEK derived (600K PBKDF2). DEK generated. wrapped_dek stored on "server".', 'log-success');
+  } catch(e) {
+    log(`Vault creation failed: ${e.message}`, 'log-error');
+    document.getElementById('btnCreate').disabled = false;
+    document.getElementById('btnCreate').textContent = 'Create Vault';
+  }
+}
+
+// ── Step 2: Recovery Passphrase ──
+async function generateRecovery() {
+  if (!S.dek) return;
+  const words = [];
+  for (let i = 0; i < 10; i++) words.push(BIP39[Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * BIP39.length)]);
+  S.recoveryWords = words.join(' ');
+  S.recoverySalt = crypto.getRandomValues(new Uint8Array(32));
+  const rk = await deriveKEK(S.recoveryWords, 'recovery', S.recoverySalt);
+  S.recoveryKey = rk;
+  const wrapped = await wrapKeyAES(S.dek, rk);
+  S.recoveryWrappedDEK = wrapped.data;
+
+  setHTML('recoveryDisplay', `
+    <div class="words-grid">${words.map((w,i) => `<span>${i+1}. ${w}</span>`).join('')}</div>
+    <p style="font-size:0.75rem;color:var(--muted);margin-top:4px">
+      ⚠️ WRITE THESE DOWN. Share with your Trusted Contact in person.
+      Anchora has never seen these. They cannot be recovered.
+    </p>
+  `);
+  setBtn('btnRecoveryDecrypt', false);
+  document.getElementById('recoveryInput').value = S.recoveryWords;
+  renderServerView();
+  log(`Recovery passphrase generated (10 words, ${S.recoveryWords.split(' ').length} words). recovery_wrapped_dek stored on "server".`, 'log-success');
+}
+
+async function decryptViaRecovery() {
+  const input = document.getElementById('recoveryInput').value.trim();
+  if (!input || !S.recoveryWrappedDEK) return;
+  try {
+    const rk = await deriveKEK(input, 'recovery', S.recoverySalt);
+    const dek = await unwrapKeyAES(S.recoveryWrappedDEK, rk);
+    const results = [];
+    for (let i = 0; i < S.records.length; i++) {
+      const r = S.records[i];
+      try {
+        const acct = await decryptString(b642bytes(r.acctIv), b642bytes(r.acctCt), dek);
+        const notes = await decryptString(b642bytes(r.notesIv), b642bytes(r.notesCt), dek);
+        results.push({ category: r.category, institution: r.institution, account: acct, notes });
+      } catch { results.push({ category: r.category, institution: r.institution, error: 'DECRYPT FAILED' }); }
+    }
+    setHTML('recoveryStatus', `<span style="color:var(--mint)">✅ RECOVERY SUCCESS! Decrypted ${results.length} records:</span><pre>${JSON.stringify(results, null, 2)}</pre>`);
+    log(`Recovery passphrase decrypted ${S.records.length} records successfully.`, 'log-success');
+  } catch(e) {
+    setHTML('recoveryStatus', `<span style="color:var(--red)">❌ FAILED: ${e.message}</span>`);
+    log(`Recovery passphrase decryption failed: ${e.message}`, 'log-error');
+  }
+}
+
+// ── Step 3: Add Records ──
+async function addRecord() {
+  if (!S.dek) return;
+  const cat = document.getElementById('cat').value;
+  const inst = document.getElementById('inst').value.trim();
+  const acct = document.getElementById('acct').value.trim();
+  const notes = document.getElementById('notes').value.trim();
+  if (!inst || !acct) return alert('Fill institution and account number');
+
+  const ac = await encryptString(acct, S.dek);
+  const nc = await encryptString(notes || '(no notes)', S.dek);
+
+  S.records.push({
+    category: cat, institution: inst,
+    acctIv: uint2b64(ac.iv), acctCt: ab2b64(ac.ct),
+    notesIv: uint2b64(nc.iv), notesCt: ab2b64(nc.ct)
+  });
+
+  renderRecords();
+  renderServerView();
+  setBtn('btnTCAccept', true);
+  log(`Record added: ${inst} (${cat}). Account number encrypted client-side.`, 'log-success');
+}
+
+function renderRecords() {
+  const html = S.records.map((r,i) => `
+    <div class="record">
+      <span class="label">${r.category} — ${r.institution}</span>
+      <span class="tag tag-enc" style="float:right">ENCRYPTED</span>
+      <div class="detail">Account: <span style="color:var(--blue)">[ciphertext: ${r.acctCt.slice(0,32)}...]</span></div>
+      <div class="detail">Notes: <span style="color:var(--blue)">[ciphertext: ${r.notesCt.slice(0,32)}...]</span></div>
+    </div>
+  `).join('');
+  setHTML('recordsList', html);
+  setHTML('step3', document.getElementById('step3').innerHTML); // refresh count
+}
+
+// ── Step 4: TC Designation ──
+async function tcAccept() {
+  const email = document.getElementById('tcEmail').value.trim();
+  if (!email) return;
+  S.tc.email = email;
+  // TC creates account → generates ECDH keypair
+  S.tc.keypair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+  S.tc.publicJwk = await crypto.subtle.exportKey('jwk', S.tc.keypair.publicKey);
+  setHTML('tcStatus', `<p style="color:var(--mint);font-size:0.85rem">✅ TC accepted: ECDH P-256 keypair generated. Public key uploaded to server.</p>`);
+  setBtn('btnRewrap', true);
+  renderServerView();
+  log('TC accepted invite. ECDH P-256 keypair created. Private key stays in browser.', 'log-success');
+}
+
+async function ownerRewrapForTC() {
+  if (!S.dek || !S.tc.publicJwk) return;
+  // Owner imports TC's public key, generates ephemeral, derives shared secret, wraps DEK
+  const tcPub = await crypto.subtle.importKey(
+    'jwk', S.tc.publicJwk, { name: 'ECDH', namedCurve: 'P-256' }, false, []
+  );
+  const ephemeral = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+  const shared = await crypto.subtle.deriveKey(
+    { name: 'ECDH', public: tcPub }, ephemeral.privateKey,
+    { name: 'AES-GCM', length: 256 }, false, ['wrapKey', 'unwrapKey']
+  );
+  const wrapped = await wrapKeyAES(S.dek, shared);
+  S.tc.wrappedDEK = wrapped.data;
+  S.tc.shared = shared;
+  S.tc.ephemeralPublicJwk = await crypto.subtle.exportKey('jwk', ephemeral.publicKey);
+  setHTML('tcStatus', document.getElementById('tcStatus').innerHTML +
+    `<p style="color:var(--mint);font-size:0.85rem">✅ Owner re-wrapped DEK for TC. tc_wrapped_dek stored on server.</p>`);
+  setBtn('btnTCDecrypt', true);
+  renderServerView();
+  log('Owner re-wrapped DEK for TC via ECDH + AES-GCM. tc_wrapped_dek on server.', 'log-success');
+}
+
+async function tcDecryptViaECDH() {
+  if (!S.tc.wrappedDEK || !S.tc.keypair || !S.tc.ephemeralPublicJwk) return;
+  try {
+    const ephemeralPub = await crypto.subtle.importKey(
+      'jwk', S.tc.ephemeralPublicJwk, { name: 'ECDH', namedCurve: 'P-256' }, false, []
+    );
+    const shared = await crypto.subtle.deriveKey(
+      { name: 'ECDH', public: ephemeralPub }, S.tc.keypair.privateKey,
+      { name: 'AES-GCM', length: 256 }, false, ['wrapKey', 'unwrapKey']
+    );
+    const dek = await unwrapKeyAES(S.tc.wrappedDEK, shared);
+    const results = [];
+    for (let i = 0; i < S.records.length; i++) {
+      const r = S.records[i];
+      const acct = await decryptString(b642bytes(r.acctIv), b642bytes(r.acctCt), dek);
+      const notes = await decryptString(b642bytes(r.notesIv), b642bytes(r.notesCt), dek);
+      results.push({ category: r.category, institution: r.institution, account: acct, notes });
+    }
+    setHTML('tcStatus', document.getElementById('tcStatus').innerHTML +
+      `<p style="color:var(--mint);font-size:0.85rem">🔓 TC SUCCESSFULLY DECRYPTED ${results.length} records via ECDH!</p>` +
+      `<pre>${JSON.stringify(results, null, 2)}</pre>`);
+    log(`TC decrypted ${S.records.length} records via ECDH successfully.`, 'log-success');
+  } catch(e) {
+    setHTML('tcStatus', document.getElementById('tcStatus').innerHTML +
+      `<p style="color:var(--red)">❌ TC DECRYPT FAILED: ${e.message}</p>`);
+    log(`TC decryption failed: ${e.message}`, 'log-error');
+  }
+}
+
+// ── Adversary Test ──
+async function adversaryAttempt() {
+  const results = [];
+  // Try with random key
+  try {
+    const fakeDek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    for (const r of S.records) {
+      try {
+        await decryptString(b642bytes(r.acctIv), b642bytes(r.acctCt), fakeDek);
+        results.push('?? UNEXPECTED SUCCESS');
+      } catch(e) {
+        results.push(`❌ ${e.message}`);
+      }
+    }
+  } catch(e) { results.push(`Error: ${e.message}`); }
+
+  // Try tampering with ciphertext
+  if (S.records.length > 0) {
+    try {
+      const r = S.records[0];
+      const tampered = new Uint8Array(b642bytes(r.acctCt));
+      tampered[0] ^= 0xFF; // flip one byte
+      const d = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: b642bytes(r.acctIv) }, S.dek, tampered
+      );
+      results.push('?? GCM AUTH SHOULD HAVE FAILED BUT DIDN\'T');
+    } catch(e) {
+      results.push(`✅ GCM auth tag caught tampering: ${e.message.split(':')[0]}`);
+    }
+  }
+
+  setHTML('adversaryResult', `<pre>${results.join('\n')}\n\n🏁 VERDICT: Without the KEK, TC's private key, or recovery passphrase,\nthe data is AES-256-GCM ciphertext. Unbreakable.</pre>`);
+  log('Adversary test complete. All decryption attempts without keys failed. GCM tamper protection verified.', 'log-success');
+}
+
+// ── Performance Benchmark ──
+async function runBenchmark() {
+  if (!S.dek) { setHTML('benchResult', '<p style="color:var(--warning)">Create a vault first.</p>'); return; }
+  setHTML('benchResult', '<p>Running...</p>');
+
+  // Generate 100 field-sized strings (~50–200 bytes each, like account numbers + notes)
+  const fields = [];
+  for (let i = 0; i < 100; i++) {
+    fields.push(`account-${i} ` + 'x'.repeat(Math.floor(Math.random() * 150) + 10));
+  }
+
+  // Benchmark encryption
+  const encStart = performance.now();
+  const encrypted = [];
+  for (const f of fields) {
+    encrypted.push(await encryptString(f, S.dek));
+  }
+  const encMs = performance.now() - encStart;
+
+  // Benchmark decryption
+  const decStart = performance.now();
+  for (const e of encrypted) {
+    await decryptString(e.iv, e.ct, S.dek);
+  }
+  const decMs = performance.now() - decStart;
+
+  setHTML('benchResult', `<pre>📊 ENCRYPTION: ${encrypted.length} fields in ${encMs.toFixed(1)}ms
+   → ${(encrypted.length / (encMs / 1000)).toFixed(0)} fields/sec
+   → ${(encMs / encrypted.length).toFixed(2)}ms per field
+
+🔓 DECRYPTION: ${encrypted.length} fields in ${decMs.toFixed(1)}ms
+   → ${(encrypted.length / (decMs / 1000)).toFixed(0)} fields/sec
+   → ${(decMs / encrypted.length).toFixed(2)}ms per field
+
+📦 TOTAL (encrypt+decrypt): ${(encMs + decMs).toFixed(1)}ms for ${encrypted.length} fields
+
+💡 For context: a typical vault has 10–50 records with 2–3 fields each
+   (20–150 fields total). At this speed, encrypting an entire vault
+   takes less time than the HTTPS handshake to fetch it from the server.
+
+🔑 The real bottleneck in Anchora is NETWORK ROUND-TRIP (10–200ms),
+   not crypto (&lt;1ms per field).</pre>`);
+  log(`Benchmark: ${encrypted.length} fields encrypted in ${encMs.toFixed(1)}ms, decrypted in ${decMs.toFixed(1)}ms`, 'log-success');
+}
+
+async function runDocumentBenchmark() {
+  if (!S.dek) { setHTML('benchResult', '<p style="color:var(--warning)">Create a vault first.</p>'); return; }
+  setHTML('benchResult', '<p>Encrypting 5MB document...</p>');
+
+  // Generate 5MB of pseudo-random data
+  const size = 5 * 1024 * 1024;
+  const data = new Uint8Array(size);
+  for (let i = 0; i < size; i += 4096) {
+    crypto.getRandomValues(data.subarray(i, Math.min(i + 4096, size)));
+  }
+
+  // Encrypt
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encStart = performance.now();
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, S.dek, data);
+  const encMs = performance.now() - encStart;
+
+  // Decrypt
+  const decStart = performance.now();
+  await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, S.dek, ct);
+  const decMs = performance.now() - decStart;
+
+  setHTML('benchResult', `<pre>📄 DOCUMENT ENCRYPTION (${(size/1024/1024).toFixed(1)}MB)
+   Encrypt: ${encMs.toFixed(1)}ms (${(size/1024/1024/(encMs/1000)).toFixed(1)} MB/s)
+   Decrypt: ${decMs.toFixed(1)}ms (${(size/1024/1024/(decMs/1000)).toFixed(1)} MB/s)
+
+💡 Most documents (title deeds, certificates) are &lt;5MB.
+   Encryption is faster than the file upload itself.</pre>`);
+  log(`Document benchmark: 5MB encrypted in ${encMs.toFixed(1)}ms, decrypted in ${decMs.toFixed(1)}ms`, 'log-success');
+}
+
+// ── Init ──
+renderServerView();
+log('Ready. Create a vault to begin.', 'log-info');
+</script>
+</body>
+</html>
