@@ -8,17 +8,17 @@
 
 ## Current vs Proposed
 
-| Current Homepage (9 sections) | Proposed (8 sections, deduplicated) |
-|------|------|
-| 1. Hero | 1. Hero (rewritten — see Access-Control Spec) |
-| 2. The problem (3 long cards) | 2. Recognition strip (8 icons — replaces old categories section) |
-| 3. How it works (3 steps) | 3. The problem (1 concise paragraph) |
-| 4. Asset categories | 4. How it works (3 steps, merged from 3 old sections) |
-| 5. The experience (3 steps again) 🔥 | 5. Security + legal boundary (rewritten) |
-| 6. Inactivity engine (5 stages again) 🔥 | 6. Pricing |
-| 7. Security | 7. FAQ (collapsed, 8 questions) |
-| 8. Pricing | 8. Final CTA |
-| 9. Final CTA | |
+| Current Homepage (9 sections)            | Proposed (8 sections, deduplicated)                              |
+| ---------------------------------------- | ---------------------------------------------------------------- |
+| 1. Hero                                  | 1. Hero (rewritten — see Access-Control Spec)                    |
+| 2. The problem (3 long cards)            | 2. Recognition strip (8 icons — replaces old categories section) |
+| 3. How it works (3 steps)                | 3. The problem (1 concise paragraph)                             |
+| 4. Asset categories                      | 4. How it works (3 steps, merged from 3 old sections)            |
+| 5. The experience (3 steps again) 🔥     | 5. Security + legal boundary (rewritten)                         |
+| 6. Inactivity engine (5 stages again) 🔥 | 6. Pricing                                                       |
+| 7. Security                              | 7. FAQ (collapsed, 8 questions)                                  |
+| 8. Pricing                               | 8. Final CTA                                                     |
+| 9. Final CTA                             |                                                                  |
 
 **Killed:** "The experience" + "Inactivity engine" (duplicates of how-it-works) + "Asset categories" (duplicate of recognition strip)
 

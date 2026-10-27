@@ -1,0 +1,6 @@
+This is a scalable 2-way (outbound/inbound) marketing comms service
+The idea is that we'd want to send "support email, sms, push, voice and in-app messaging" through pinpoint
+
+One of the main use-case is SMS. Can create groups, receive replies, ...
+
+To run campaigns by sending marketing, bulk transactional SMS messages, ...
