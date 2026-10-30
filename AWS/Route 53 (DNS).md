@@ -23,7 +23,6 @@ LowTTL: 60sec > More traffic on Route53, outdated for less time, easy to change 
 
 ### CName vs Alias
 They both point one DNS name toward another destination
-	Alias records is an AWS Route 53 feature designed to work with AWS resources
 
 Imagine you own a resource, and want the visitors to reach your load balancer using your own domain (www.anchora.com.ng). This can be done using an Alias record. A CName can also point a hostname to another hostname, subject to DNS rules
 

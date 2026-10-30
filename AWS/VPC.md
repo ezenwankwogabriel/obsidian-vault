@@ -269,7 +269,13 @@ Interface Endpoints: powered by Privatelink
 	- costs per hour per GB of data processed
 	- commonly uses private DNS to route service request to endpoint
 	supports most AWS services
-	services include: AWS Service Manager, CloudWatch, Secrets Manager, KMS, ECR
+	services include: 
+		- AWS Service Manager 
+		- CloudWatch 
+		- Secrets Manager
+		- KMS
+		- ECR
+		- SNS, SQS
 Gateway Endpoints (for S3 or DynamoDB)
 	- Uses route tables to direct traffic to Amazon S3 or DynamoDB through AWS managed prefix list.
 	- Supports both S3 and DynamoDB only
@@ -277,7 +283,7 @@ Gateway Endpoints (for S3 or DynamoDB)
 	- No endpoint security group is created
 	This is freeeeeeeeee!!!!!!!!
 
-The one time an Interface Endpoint is preferred to Gateway Endpoint is when access is required from an on-premises, a different VPC, or a different region
+The one time an Interface Endpoint is preferred to Gateway Endpoint is when access is required from an ***on-premises***, ***a different VPC***, or ***a different region*** (requiring an actual interface)
 
 ##### How a gateway endpoint actually works
 Suppose you have:
@@ -375,6 +381,7 @@ use-cases:
 2\. Hosted Connections (50Mbps - 25Gbps)
 	Connection requests are made via AWS Direct Connect Partners 
 	Capacity can be added or removed on demand
+
 Often takes longer time (1 month) to establish a new Direct Connection.
 
 Data isn't encrypted here by default, but secure as it is dedicated
@@ -432,8 +439,12 @@ It determines how network traffic travels over that connectino and which AWS net
 
 ___
 # Transit Gateway (central routing VPC hub)
+This is a network transit hub that connects multiple VPCs and on-premises network through a central point
+
+Think this as a central router for your aWS network
+
 What the problem is:
-Imaging you have four VPCs (a, b, c, d for backend, frontend, db, analytics)
+Imagine you have four VPCs (a, b, c, d for backend, frontend, db, analytics)
 Each VPC is a separate virtual network. Without Transit Gateway you might need to create and manage multiple VPC peering connections to enable communication
 
 With four VPCs, a fully connected peering design needs six connection. With 10 vpcs, it needs 45 for each to be able to communicate with another (n(n-1) / 2)
@@ -443,7 +454,7 @@ Each VPC connects to the hub, and the hub routes traffic between networks when t
 
 It has its own routing table, separate from that in your VPCs.
 
-*This is the only service in AWS that supports IP Multicasting*
+*This is the only service in AWS that supports IP Multicasting* 
 
 ### Transit Gateway for scaling Site-to-Site VPN connection
 
@@ -480,7 +491,7 @@ Egress-only IGW: Provides outbound-only internet for IPv6
 
 #### The issue: IPv6 are all globally routable.
 
-With IPv4, a private EC2 might have add 10.0.1.10. That add isn't publicly routable on the internet. To access the internet, you'd need a NAT Gateway, which translates the private to a public IPv4 address
+With IPv4, a private EC2 might have address 10.0.1.10. That add isn't publicly routable on the internet. To access the internet, you'd need a NAT Gateway, which translates the private to a public IPv4 address
 
 With IPv6, an EC2 instance can have a globally routable IPv6 add even when it's a subnet you consider private
 
@@ -515,12 +526,75 @@ For S3. remember ingress is free. any data going into s3 is free
 
 ---
 # AWS Network Firewall
-This is used to protect your entire Amazon VPC. From layer 3 - layer 7
-Any direction, you can inspect all
-	vpc-vpc traffic
-	outboud / inbound internet
-	to/from direct connect & site-to-site vpn
+A managed, stateful network firewall that protects traffic entering, leaving or moving between subnets in a VPC
+
+Think this as a firewall deployed inside your VPC to inspect & control network traffic (not just a security group attached to an individual resource)
+
+You can use it to:
+- block traffic to known malicious IP addresses & domains
+- Allow or deny traffic based on IP addresses, ports and protocols
+- Inspect and filter HTTP/HTTPS traffic using domain based rules
+- Detect / prevent suspicious network activity using Suricata-compatible instrusion
+
+Network Firewall is deployed into dedicated firewall subnets. You must configure VPC route tables to direct traffic through the firewall endpoint.
+
+For example, to inspect outbound internet traffic:
+1. An EC2 instance sends traffic from a private subnet.
+2. The private subnet's route table directs internet-bound traffic to the Network Firewall endpoint.
+3. The firewall inspects the traffic.
+4. Allowed traffic continues toward the NAT Gateway and Internet Gateway, according to your routing architecture.
 
 Internally uses the Gateway Load Balancer
 
-Rules managed by AWS Firewall Manager to apply to many VPCs
+## Network Firewall vs other AWS security controls
+
+| Service              | Main purpose                                                   |
+| -------------------- | -------------------------------------------------------------- |
+| Security Group       | Stateful traffic filtering at resource/network interface level |
+| Network ACL          | Stateless subnet-level traffic filtering                       |
+| AWS Network Firewall | Centralized, managed network inspection and filtering          |
+| AWS WAF              | Protects web applications against HTTP(S) attacks              |
+| AWS Shield           | DDoS protection                                                |
+| GuardDuty            | Detects suspicious or malicious activity                       |
+|Network Firewall + NAT Gateway|Inspect and control outbound internet traffic|
+A common exam trap: AWS WAF is not a replacement for Network Firewall.
+- WAF protects web applications from threats such as SQL injection and cross-site scripting.
+- Network Firewall inspects network traffic at the VPC level.
+
+---
+# Firewall Manager
+
+This is a centralized security management service
+
+While Network Firewall actually inspects & filters network traffic, Firewall manager helps you centrally configure and enforce firewall & security policies across multiple AWS accounts
+
+use-case
+Imagine a company has 30 AWS accounts:
+- Account A has an EC2 application.
+- Account B hosts public websites.
+- Account C has multiple VPCs.
+- Account D has several S3 buckets.
+
+Without centralized management, administrators must configure security protections separately in each account.
+
+With Firewall Manager, the security administrator can define policies centrally and apply them across accounts and resources.
+
+For example:
+
+> Ensure every internet-facing Application Load Balancer is protected by AWS WAF, and every VPC has the required Network Firewall protections.
+
+## What can Firewall Manager manage?
+
+These are the important policy types to know for the exam:
+
+|Policy type|What Firewall Manager does|
+|---|---|
+|AWS WAF|Centrally deploys web ACLs and WAF rules|
+|AWS Shield Advanced|Applies DDoS protections to supported resources|
+|Security Groups|Audits and manages security group configurations|
+|AWS Network Firewall|Deploys and manages network firewalls across VPCs|
+|Route 53 Resolver DNS Firewall|Applies DNS filtering rules across VPCs|
+|Network ACLs|Centrally manages subnet-level network ACL policies|
+|Third-party firewalls|Manages supported third-party firewall integrations|
+
+For example, you can create one WAF policy and apply it to Application Load Balancers across multiple accounts.

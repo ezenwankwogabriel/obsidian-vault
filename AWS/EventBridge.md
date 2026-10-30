@@ -21,12 +21,15 @@ Cloudwatch monitors metrics, logs and operational health, and can trigger alarms
 	ex: CPU exceeds 90% for 5 minutes
 	NB: A metric threshold is typically a Cloudwatch alarm use case.
 
-## Event buses, rules and targets
+## EventBridge Event buses
 1\. Event Buses: Receives events. 
 The. main types are:
 	default event buses: where enventbridge serves as the bridge for diff aws services (all aws events lands here)
+	
 	partner event buses: when event bridge serves as the bridge for partner services (so you can react directly to changes outside of AWS in your account)
+	
 	custom event buses: you can create your own event buses and your own apps can send their events to your own custom event bus
+
 Event buses can be accessed by other AWS accounts using "Resource-based policies"
 
 You can archive events sent to an event bus (indefinitely or set period)

@@ -10,13 +10,14 @@ The configuration you create to tell cloudfront how to deliver your content. On 
 
 The origin is where cloudfront gets the original content when needs it, and then caches them at the Edge.
 While CloudFront is global, your origin might be in a single AWS Region. CloudFront doesn't auto replicate your entire app/db worldbase
-
+Origins could be:
 	S3 Buckets
 		For distributing files & caching them at the edge
 		for uploading files to S3 through cloudfront
 		secured using origin access control
 	
-	VPC Origin
+	VPC Origin (keeps connection private to vpc hosted apps)
+	A vpc origin lets AWS Cloudfront securely reach an app hosted inside a VPC, without requiring that app to have a public IP address
 		For applications hosted in VPC private subnet
 		Private app Load Balancer / Network Load balancer / EC2 instances
 	
@@ -98,14 +99,38 @@ anycast IP: all servers hold same IP address and client is routed to the nearest
 
 ## AWS Global Accelerator
 
-Issue: You have a deployed app in one region, but users are in all parts of the world. Ideally you'd have delay/high latency accessing this from different parts of the world
+Global Accelerator & cloudfront both improve application performance globally.
 
-Imagine your application runs on an Application Load Balancer in London, but users access it from Lagos, New York, and Singapore. Rather than relying entirely on the public internet's routing, Global Accelerator directs users through AWS's global network toward the appropriate endpoint.
+The easiest way to distinguish them:
+- Global Accelerator: Improves the network path users take to reach your application.
+- CloudFront: Caches and delivers content closer to users.
 
-Uses two static anycast IPv4 addresses/DNS/provide a stable entry point. This sends traffic directly to the Edge locations closest to you. the edge location sends the traffic to your app.
+Imagine you have an application hosted in two AWS Regions:
+- US East (N. Virginia)
+- Europe (Frankfurt)
+Users access your application from Nigeria, the UK, the US, and other locations.
 
-It doesn't auto create a second copy of your application. You must configure healthy alternative endpoints and deploy your application there if you want regional failover
+Without Global Accelerator, users connect to your application through its public endpoint, potentially taking different internet routes.
+
+Global Accelerator gives you two static anycast IP addresses that users connect to.
+
+It routes traffic through the AWS global network to an optimal healthy endpoint.
+
+How it works
+1. A user connects to one of the Global Accelerator static IP addresses.
+2. Traffic enters AWS at a nearby AWS edge location.
+3. AWS carries the traffic over its global private network.
+4. Traffic reaches the selected healthy endpoint, such as an ALB in an AWS Region.
+5. The ALB distributes requests to your EC2 instances.
+Important: Global Accelerator doesn't cache your content. It accelerates network traffic.
 
 think this as a smart global entrance to your application
 
-It works with Elastic IP, EC2 instances, ALB, NLB, pub or privvate
+It works with Elastic IP, EC2 instances, ALB, NLB, pub or private
+
+use-cases:
+- Global gaming application
+- Multi-Region application: you have an app in two region, if primary is unhealthy, global accelerator can redirect traffic to another region, subject to health checks
+- static IP requirements: Your customers need to allow fixed IP addresses in their firewalls. Global Accelerator provides two which remain same anywhere you go
+
+

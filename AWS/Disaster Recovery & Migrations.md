@@ -163,11 +163,11 @@ For incremental replication of on-premises live servers to AWS. This is a rehost
 
 These three services are easy to confuse on the exam.
 
-|Requirement in the question|Service|
-|---|---|
-|Move physical or virtual servers to EC2 with minimal changes|AWS Transform MGN (formerly AWS Application Migration Service)|
-|Recover servers after a disaster, including failback to the source environment|AWS Elastic Disaster Recovery (DRS)|
-|Migrate database records between supported database engines|AWS Database Migration Service (DMS)|
+| Requirement in the question                                                    | Service                                                        |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Move physical or virtual servers to EC2 with minimal changes                   | AWS Transform MGN (formerly AWS Application Migration Service) |
+| Recover servers after a disaster, including failback to the source environment | AWS Elastic Disaster Recovery (DRS)                            |
+| Migrate database records between supported database engines                    | AWS Database Migration Service (DMS)                           |
 
 The distinction between MGN and DRS is especially subtle because both use continuous block-level replication technology. MGN is focused on server migration and cutover; DRS focuses on disaster recovery, including recovery and failback capabilities.
 

@@ -16,6 +16,8 @@
 		on-premise/other cloud to AWS
 		AWS - AWS (diff storage services)
 	Perserves File permission & metadata (NFS POSIX, SMB)
+	
+	This is primarily for transfering files between storages, and not for migrating / transfering databases
 
 4\. AWS Data Transfer Terminal
 	Provides a physical facility where customers can bring storage devices and transfer large datasets securely into AWS. It's an alternative to investigate when online transfer isn't practical. Availability and access depend on the supported locations and booking arrangements.
@@ -51,7 +53,7 @@ This is the bridge btw on-premise data and cloud data. Could be for disaster rec
 
 Imagine a hospital in Lagos has applications that expect files or disks to be available inside its own data center. The hospital wants to store data in AWS without immediately rewriting those applications or changing every workflow.
 
-## Gateway Types:
+## Storage Gateway Types:
 
 1\. Amazon S3 File Gateway
 

@@ -87,7 +87,7 @@ When updates are made to the new DB cluster, additional storage is allocated and
 		To encrypt an existing un-encrypted db, take a snapshot, and restore as an encrypted db
 	In-flight encryption:
 		Clients must use the AWS TLS root certificates for in-flight encryption (encryption in transit)
-	IAM Authentication: IAM roles connect to dbs (instead of username/pw). Auth Tokens are valid for 15 mins. The token is used to authenticate a new connection; an established connection is open beyond the tokens expiry
+	IAM Authentication: IAM auth lets an app connect to a supported RDS database using temporary IAM credentials instead of a permanent db password. Auth Tokens are valid for 15 mins. The token is used to authenticate a new connection; an established connection is open beyond the tokens expiry
 	Security Groups: Control network access to your RDS/Aurora DB (allow/block specific ip/groups)
 	No SSH except for RDS Custom
 	Can enable audit log, and sent to CloudWatch logs for longer retention
@@ -118,3 +118,22 @@ If you think of a way to enforce IAM authentication for dbs, think RDS Proxy.
 It is never accessed publicly (must be from VPC)
 
 
+AWS Aurora Global db vs DynamoDB Global Table
+- Aurora Global Database: A relational database replicated across Regions.
+    
+- DynamoDB global tables: A NoSQL table replicated across Regions.
+    
+
+
+# RDS Event Subscription
+Lets AWS notify you when specific events happen to your RDS db resources. You choose the events you care about, and RDS sends notification through SNS.
+
+Events you can subscribe to include:
+- Availability
+- Failure
+- Backup
+- Configuration changes
+- Maintenance
+- Storage
+
+NB: This doesn't cover database-level operations like "UPDATE, DELETE, INSERT"

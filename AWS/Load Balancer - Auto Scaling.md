@@ -83,6 +83,8 @@ The goal is to:
 	Recreate an EC2 instance in case a previous one is terminated
 ASGs are free (you pay only for the underlying EC2 instances)
 
+An Auto Scaling group also enables you to use Amazon EC2 Auto Scaling features such as health check replacements and scaling policies.
+
 You set a min capacity (2), then a desired capacity (4), and a maximum capacity (6)
 
 Users > ELB > ASG > EC2 Instances
@@ -91,11 +93,19 @@ Users > ELB > ASG > EC2 Instances
 	Dynamic Scaling
 		Target Tracking Scaling
 			Define a target value: ex: average ASG CPU to stay at around 40%
-		Simple/Step Scaling
-			When cloudwatch alarm is triggered, add or remove instances
+			Adjusts capacity to maintain a target metric
+			
+		Simple/Step Scaling: When cloudwatch alarm is triggered, add or remove instances
+		
+		Step Scaling: Adds/removes capacity by different amounts depending on alarm severity. ex: add 2 instance aat. 70%, but 5 at 90% CPU
+		Simple Scaling: Scales by a fixed amount after an alarm, with a cooldown before another scaling action. ex: basic, less responsive scaling scenarios
 	Scheduled Scaling
+	
 		Anticpate a scaling based on known usage pattern (new launch, ...)
 		Predictive scaling: forcast load and schedule scaling actions ahead
+	
+	Predictive Scaling
+		Forecasts future demand from historical patterns and schedules capacity ahead of time. For recurring, predictable traffic patterns
 
 ### Good metrics to scale on
 - CPU Utilization
@@ -105,5 +115,4 @@ Users > ELB > ASG > EC2 Instances
 
 Cooling Down
 After Scaling happens, you are in the cooldown period. (default 300 seconds)
-during this period ASG will not launch or terminate additional instances(to allow metic cooldown
-)
+during this period ASG will not launch or terminate additional instances(to allow metic cooldown)

@@ -108,7 +108,14 @@ CloudFormation helps improve consistency and repeatability. It does not automati
 | Systems Manager   | Manage and operate resources, including configuration and automation                        |
 | Terraform         | Infrastructure as code across AWS and other supported providers                             |
 
-Exam clue: If a question asks how to create and manage a repeatable collection of AWS resources using declarative YAML or JSON, choose CloudFormation.
+Exam clue: If a question asks how to create and manage a repeatable collection of AWS resources using declarative YAML or JSON, choose CloudFormation
+
+---
+### Terraform
+This is an Infrastructure as code (IaC) tool that lets you define and manage cloud infrastructure using config files instead of manually creating resources in AWS Console
+It uses HashiCorp Configuration Language (HCL). 
+
+---
 
 ## 6. Exam traps you should know
 

@@ -1,7 +1,7 @@
 ## AWS Organization
 This is a global servcie allowing you manage multiple AWS accounts
 
-The main account is the management account, while other joining accounts are called member accounts
+The main account is the **management** account, while other joining accounts are called **member** accounts
 
 Billing is consolidated across all account (single payment method) [pays for all orgs cost]
 Hence you get volume discounts
@@ -175,6 +175,12 @@ use-case: you need basic directory features without full capabilities of Microso
 	Create an AD connector, and proxy onto your AWS services
 
 ---
+# AWS Resource Access Manager (RAM)
+This is a service that enables you to easily and securely share AWS resources with any AWS account or within your AWS Organization. You can share AWS Transit Gateways, Subnets, AWS License Manager configurations, and Amazon Route 53 Resolver rules resources with RAM.
+
+Many organizations use multiple accounts to create administrative or billing isolation, and limit the impact of errors. RAM eliminates the need to create duplicate resources in multiple accounts, reducing the operational overhead of managing those resources in every single account you own. You can create resources centrally in a multi-account environment, and use RAM to share those resources across accounts in three simple steps: create a Resource Share, specify resources, and specify accounts. RAM is available to you at no additional charge.
+
+---
 ## AWS Control Tower
 An easy way to setup and govern a secure and compliant multi-account AWS environment based on best practices
 
@@ -208,9 +214,6 @@ example: reject a noncompliant resource deployment made through an applicable Cl
 Remember:
 
 - `aws:RequestedRegion` = which AWS endpoint is called?
-    
 - `aws:SourceIp` = where is the request coming from?
-    
 - `aws:ResourceTag` = what tag is on the resource?
-    
 - SCP = what actions can be permitted within an AWS account?

@@ -139,7 +139,7 @@ the flow from the start is the sport request which is:
 > max price, desired no of instances > launch specification > request type (one-type | persistent) > valid from | valid until
 To cancel a spot instance it needs to be in the open state, or active or disabled state.
 Canceling does not stop instances already running.
-To stop, you terminate the associated spot instances. because if you first terminate, it goes back to the spot request and if it is a persistent request type, gets respawn
+To stop, you terminate the associated spot instances. because if you first stop, it goes back to the spot request and if it is a persistent request type, gets respawn
 
 ### Spot Fleets 
 A set of spot instances and an optional on-demand instance
@@ -151,7 +151,7 @@ Strategies to allocate spot instances:
 - capacity optimized: pool with the optimal capacity for the no of instances
 - price capacity optmized (recommended): pool with the highest capacity available, then select the pool with the lowest price
 
-## Spot Request (ai - defined)
+## Spot instance (ai - defined)
 This is a request to use AWS's spare computing capacity at a discounted price
 As AWS has physical servers that aren't always fully used, instead of letting that capacity sit idle, AWS allows you to use it cheaply.
 The catch here is that AWS can interrupt your spot instance when it needs that capacity back
@@ -186,3 +186,24 @@ Strategies used to control over the EC2 instance placement strategy so you don't
 - Precision time Placement group
 	- instances are placed on hardware with direct access to high-precision time sources
 ![[Pasted image 20261014161437.png]]
+
+
+---
+
+Overall explanation
+
+**Amazon CloudWatch** has Amazon EC2 Metrics available for monitoring. CPU Utilization identifies the processing power required to run an application upon a selected instance. `Network Utilization` identifies the volume of incoming and outgoing network traffic to a single instance. The `Disk Read` metric is used to determine the volume of data the application reads from the hard disk of the instance. This can be used to determine the speed of the application. However, there are certain metrics that are not readily available in CloudWatch which can be collected by setting up a custom metric.
+
+![EC2 CloudWatch Monitoring](https://media.tutorialsdojo.com/public/TD-EC2CloudWatchMonitoring-12June2025.png)
+
+You need to prepare a custom metric using CloudWatch Monitoring Scripts which is written in Perl. You can also install CloudWatch Agent to collect more system-level metrics from Amazon EC2 instances. Here's the list of some of the custom metrics that you can set up:
+
+- `**Memory utilization**`
+
+- `Disk swap utilization`
+
+- `Disk space utilization`
+
+- `Page file utilization`
+
+- `Log collection`

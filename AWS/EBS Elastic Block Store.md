@@ -10,23 +10,25 @@ This is a network drive you can attach to your instances while they run. Persist
 ## EBS Snapshot
 - Make a backup of your EBS volume
 - Recommended to detach volume to do a snapshot but not necessary
-- Can coopy snapshots across AZ or Region
+- Can copy snapshots across AZ or Region
 
 Snapshop Archive: Move a snapshot to an achieve tier that's 75% cheaper, takes within 24-72 hours for restoring the archive
+
 Recycle Bin for EBS Snapshot. for recovery for accidental deletion (1day - 1year retention)
+
 Fast Snapshot Restore: force full initialization of snapshot on first use (very expensive)
 
 EBS volumes are network drives with good limited performance
 If need be for a high performance hardware disk, use an EC2 Instant Store
 
 ### Instant Store
+This is a temporary, physically attached storage on the host machine running your EC2 instance.
 - Better I/0 performance
-- Caveat: stopping the instance, ec2 instant store lose their storage (ephemeral)
-- Good for buffer/cache/temp content (not for long term storage)
+- Caveat: stopping the instance, ec2 instant store lose their storage (ephemeral). But it is preserved on reboot
 - Ensure to backup if you choose to go with this for reliability
-
-#### IOPS Input/Output Per Second
-Measures how many read & write operation a storage device can perform in one second. 
+use-case: it is good for buffer/cache/temp content (not for long term storage)
+#### IOPS (Input/Output Per Second)
+Measures how many read & write operation a storage device can perform in one second.
 Low IOPS: the librarian retrieves 100 books per second (request takes longer to complete)
 High IOPS: the librarian retrieves 10,000 books per second (Many more requests handled quickly)
 
@@ -62,7 +64,7 @@ High IOPS: the librarian retrieves 10,000 books per second (Many more requests h
 - st 1 (HDD): Low cost HDD volume designed for frequently accessed, throughput intensive workloads
 - sc 1 (HDD): lowest cost HDD volume designed for less frequently accessed workload
 
-*only gp2/gp3 and io 1/io 2 can be used as boot volumes (i.e where root OS is running)*
+*only gp2/gp3 and io 1/io 2 can be used as boot volumes (i.e where root OS is running)* [the SSD candidates].
 The EBS volumes are characterized in Size|Throughput|IOPS (I/O Ops per sec)
 
 

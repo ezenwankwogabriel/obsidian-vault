@@ -86,7 +86,7 @@ If the question mentions frequent communication between nodes and network latenc
 If it specifically mentions keeping instances physically close together, consider a cluster placement group.
 ###### Compute and Networking
 EC2 Enhanced Network 
-	this gives you higher bandwidth, higher packets per second, and lower latency
+This gives EC2 instances higher network performance with lower CPU overhead and lower latency. Uses SR-IOV tech to let VM access network hardware more efficiently than traditional virtualized networking
 	Ways to get this up:
 		1. Elastic Network Adapter (ENA): up to 100Gbps
 		2\. Intel 825599VF: up to 10Gbps -- Legacy

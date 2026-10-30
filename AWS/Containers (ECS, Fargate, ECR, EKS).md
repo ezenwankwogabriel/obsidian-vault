@@ -35,7 +35,7 @@ This lets you register & manage supported external servers, such as on-premise/v
 
 This is an extension of ECS to external infrastructure (likely outside of AWS, existing on-premises server)
 
-## Launch types vs capacity providers
+## Launch types(compute) vs capacity providers(capacity)
 
 Launch type specify the compute options used to run a task (EC2 / Fargate)
 

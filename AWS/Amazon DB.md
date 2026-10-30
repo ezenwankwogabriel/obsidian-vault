@@ -65,3 +65,35 @@ use-case: store IoT device info, time series data
 Timestream
 A time series db (a bunch of points that have a time series in it)
 use-case: 
+
+
+
+---
+# dynamoDB
+A fully managed NoSQL db that stores application data as items in tables
+
+# dynamoDB Streams
+A stream of records represent chagnes made to items in a dynamoDB table. it's responsible for making item-level changes available for downstream processing.
+On any db change, DynamoDB streams can emit a record describing the change
+
+# kinesis client library (KCL) - the stream consumer domain
+This is a library that helps you build apps that consume and process records from a stream.
+It is neither the stream nor the DB.
+
+# dynamoDB as KCL's metadata store
+dynamoDB can serve as a store for business data and a store for processing cordination data.
+The KCL metadata table is typically a separate DynamoDB table
+
+# dynamoDB streams kinesis adapter
+kcl was designed around Amazon kinesis data stream consumer model. This adapter is a bridge allowing KCL-based applications to consume DynamoDB streams records. 
+It does not turn dynamoDB streams into a kinesis Data stream nor replace the source table
+
+## What to remember for SAA-C03
+
+| If the question asks…                                                        | Think…                                                                                                                            |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| How can I react to item inserts, updates, and deletes?                       | DynamoDB Streams                                                                                                                  |
+| How can a Lambda function process DynamoDB changes without managing workers? | Lambda event source mapping for DynamoDB Streams                                                                                  |
+| How can I build a KCL-based consumer for DynamoDB Streams?                   | DynamoDB Streams Kinesis Adapter                                                                                                  |
+| How does KCL coordinate workers and track progress?                          | DynamoDB metadata table, leases, and checkpoints                                                                                  |
+| How do I retain change records longer than 24 hours?                         | Consider a different streaming/archival design, such as forwarding records to Kinesis Data Streams or another durable destination |

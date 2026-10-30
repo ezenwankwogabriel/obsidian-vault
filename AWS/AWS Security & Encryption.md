@@ -274,6 +274,9 @@ It uses Machine Learning algorithm, anomaly detection, 3rd party data
 
 ## Amazon Inspector
 A service allowing you run automated security assessments
+Automatically discovers and assesses supported AWS workloads for software vulnerabilities.
+
+use-case: When you want to identify vulnerable software packages/exposed ec2 instances ...
 
 For EC2 instances
 	- leveraging your Systems Manager (SSM) agent
@@ -303,3 +306,20 @@ The easiest way to remember the three is:
 - Macie: What sensitive data am I storing, and is it exposed?
 - GuardDuty: Is someone or something behaving maliciously?
 - Inspector: Does my software or infrastructure have vulnerabilities attackers could exploit?
+
+---
+
+# **AWS Artifact**
+Provides on-demand access to AWS security and compliance report, and access to certain agreements with aWS
+
+use-case: your auditor or customer requests evidence of AWS compliance with sttandards such as ISO 27001 or SOC
+
+This is your go-to, central resource for compliance-related information that matters to you. It provides on-demand access to AWS’s security and compliance reports and select online agreements. Reports available in AWS Artifact include our Service Organization Control (SOC) reports, Payment Card Industry (PCI) reports, and certifications from accreditation bodies across geographies and compliance verticals that validate the implementation and operating effectiveness of AWS security controls. Agreements available in AWS Artifact include the Business Associate Addendum (BAA) and the Nondisclosure Agreement (NDA).
+
+---
+# AWS Security Hub
+Aggregates and prioritizes security findings from supported AWS security services and checks your environment against supported security standards.
+
+use-case: when you need a consolidated view of security risks and compliance posture across AWS account
+
+AWS Guard duty detects threats, while AWS Security Hub centralizes security findings and helps you assess your overall security posture

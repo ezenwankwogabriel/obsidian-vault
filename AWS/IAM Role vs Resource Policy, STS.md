@@ -68,3 +68,21 @@ Cross-account access generally requires authorization on both sides: the caller'
 | EventBridge writes to Kinesis Data Streams | IAM role assumed by EventBridge                                           |
 | Lambda in Account A reads S3 in Account B  | Lambda role and S3 bucket policy                                          |
 | Lambda decrypts data with KMS              | Lambda role plus the necessary KMS key authorization                      |
+
+---
+# AWS STS –– Security Token Service
+This issues temporary security credentials so a user, app, or AWS service can assess AWS resources withiout relying on long-term keys
+
+It works with IAM roles, AssumeRole, cross-account access and temp credentials
+
+Ideally you'd need IAM user credentials to access S3 from an ec2 instance, but now you only need a role attached to the EC2, defining necessary permissons. this provides temporary credentials using AWS STS
+
+STS API Operations
+1\. AssumeRole: Obtain temp credentials for an **IAM role**. For cross-account access, role switching, and delegated permission
+
+2\. AssumeRoleWithIdentity: Obtain temp credential using an identity from a supported web identity provider (such as OIDC). ex: an app using a supported identity provider
+
+3\. AssumeRoleWithSAML: Obtain temp credentials through SAML federation, often for employees siging in through a corporate identity system
+
+4\. GetCallerIdentity: Identify which AWS identity is making a request. Returns details as "aws account ID and ARN". doesn't grant additional permission
+

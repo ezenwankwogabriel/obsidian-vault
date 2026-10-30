@@ -61,7 +61,7 @@ This can only be done from the CLI, and not from the aws dashboard/console
 
 You supply the encryption key with the request. S3 performs the encryption but does not store that key for you.
 
-Choose it when: You must provide and control the key material yourself. You must securely retain the key and provide it again for subsequent access. Current S3 security settings disable SSE-C for new general-purpose buckets by default, so it must be deliberately enabled when needed.&#x20;
+Choose it when: You must provide and control the key material yourself. You must securely retain the key and provide it again for subsequent access. Current S3 security settings disable SSE-C for new general-purpose buckets by default, so it must be deliberately enabled when needed.
 ### How to remember the names
 
 - SSE-S3: S3 manages the keys.
@@ -97,7 +97,7 @@ Since January 2023, Amazon S3 automatically applies SSE-S3 (server-side encrypti
 
 - Encryption does not equal access control. An encrypted object can still be accessed by an authorised principal. Use IAM policies, bucket policies and appropriate access controls.
 
-- Changing the bucket's default encryption doesn't re-encrypt existing objects. Existing objects retain their previous encryption until you explicitly rewrite or re-encrypt them.&#x20;
+- Changing the bucket's default encryption doesn't re-encrypt existing objects. Existing objects retain their previous encryption until you explicitly rewrite or re-encrypt them.
 
 - SSE-KMS needs key permissions as well as S3 permissions. A principal may have permission to read an S3 object but still be unable to decrypt it because it lacks the required KMS permissions.
 
