@@ -37,9 +37,16 @@ Exam clue: If the question says Athena query costs are too high because too much
 **One more thing, "use larger files (> 128 MB) to minimize overhead". If you had many many small files, athena isn't going to perform best (maybe use glue to gather the resources before passing to athena)**
 
 ### Athena Federated Queries
-Lets you use SQL in Athena to query data stored in different stores, including sources outside Amazon S3, without first moving all the data to a data warehouse
+Lets you use SQL in Athena to query data stored outside S3, including data in external dbs and other sources, without first moving it to S3.
 
-Use Data Source connectors that run on AWS lambda to run Federated Queries (cloudwatch logs, dynamodb, rds)
+Normally Athena queries data in S3. With federated queries, Athena can reach into external data sources & query them using SQL
+
+Use Data Source connectors that run on AWS lambda to run Federated Queries (cloudwatch logs, dynamodb, rds
+
+The architecture:
+	- Amazon Athena: receives & executes the query
+	- Data source connector: Connects athena to the external data sources
+	- **AWS Lambda:** Runs the connector & facilitates commuincation btw Athena and external Sources
 
 ### AWS Glue Data Catalog
 Your S3 bucket might contain thousands of files, Athena needs to know how to interpret those files as tables

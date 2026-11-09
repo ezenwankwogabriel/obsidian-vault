@@ -93,14 +93,26 @@ Instead, use IAM roles. give the permission to iAM roles, then continue with act
 	- for complicated licensing model (bring your own license (byol)) or companies with strong regularory / compliance needs
 - Dedicated Instances: no other customer will share your hardware
 	- Instances run on hardware thats dedicated to you, but you may share the hardwared with other instances in same account
-- 
 - Capacity reservations: reserve capacity in specific AZ for any duration
 	- you always have access to EC2 capacity when needed
 	- no time commitment (create/cancel anytime), no billing discounts
 	- you're charged at on-demand rate whether you run instances or not
 	- suitable for short-term uniterrupted workflow for a particular AZ
 
+## EC2 purchasing options — quick recognition guide
 
+| If the question says...                                  | Think...                  |
+| -------------------------------------------------------- | ------------------------- |
+| No commitment, pay as you use                            | On-Demand                 |
+| Spare capacity, cheapest, can tolerate interruption      | Spot Instances            |
+| Predictable workload, 1 or 3-year commitment             | Reserved Instances        |
+| Discount across EC2, Fargate and Lambda                  | Compute Savings Plan      |
+| Specific EC2 family and Region, flexible instance size   | EC2 Instance Savings Plan |
+| Highest RI discount, fixed configuration                 | Standard RI               |
+| Change instance family or configuration after commitment | Convertible RI            |
+| Guaranteed EC2 capacity in a specific AZ                 | Capacity Reservation      |
+| Entire physical server, socket/core licensing            | Dedicated Host            |
+| Hardware dedicated to your account                       | Dedicated Instance        |
 
 Dedicated Host => You rent a physical server
 Dedicated Instance => Your EC2 instance runs on hardware dedicated to you, but aws manages the physical server
@@ -207,3 +219,6 @@ You need to prepare a custom metric using CloudWatch Monitoring Scripts which is
 - `Page file utilization`
 
 - `Log collection`
+
+---
+## EC2 Pricing Models / AWS Cost Optimization

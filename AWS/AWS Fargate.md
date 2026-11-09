@@ -119,3 +119,64 @@ Fargate isn't a general-purpose EC2 replacement.
 - EKS Fargate requires Fargate profiles to determine which Pods run on Fargate; not every Kubernetes workload or feature is supported.
 
 Memory trick: ECS decides how containers run; Fargate provides the compute without you managing servers. Choose EC2 instead when you need more control over the underlying hosts.
+
+
+---
+
+ECS and EKS are container orchestration services.
+Fargate is a serverless compute engine for running computers.
+
+They aren't competing products
+
+![[Pasted image 20261109131536.png]]
+
+### Amazon ECS - Elastic Container Service
+This is AWS's own container orchestration service.
+Helps deploy, manage, scale, and maintain Docker containers
+
+- You package app into Docker image
+- You push the image to ECR (container registry)
+- Create an ECS Cluster:
+	- ex: production-cluster
+- Create a Task Definition (docker image, CPU and memory, env, ports, roles, ...)
+```
+  Task Definition: ecommerce-api
+
+	Container:
+	  Image: ecommerce-api:v1
+	  CPU: 0.5 vCPU
+	  Memory: 1 GB
+	  Port: 3000
+```
+- Create an ECS Service (replaced on crash)
+```
+Desired tasks: 3
+
+Task 1: Running
+Task 2: Running
+Task 3: Running
+```
+- Configure a load balancer: can attach ALB to this
+```
+                Internet
+                   |
+                   v
+                  ALB
+                   |
+          +--------+--------+
+          |        |        |
+        Task 1   Task 2   Task 3
+          |        |        |
+        Node.js  Node.js  Node.js
+```
+
+You can run containers in EC2 or by using Fargate
+
+Fargate doesn't mean you app scales automatically. You still configure the scaling policy, typically using an Application Auto Scaling. And configure ALB if you need load balancing.
+AWS only manages the underlying fargate compute
+
+### EKS - Elastic Kubernetes Service
+AWS's managed kubernetes service. Kubernetes is an open source platform.
+Use this if your:
+- org already uses kubernetes
+- engineering team has kubernetes expertise

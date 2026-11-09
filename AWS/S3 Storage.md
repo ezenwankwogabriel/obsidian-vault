@@ -1,3 +1,5 @@
+## AWS Data Transfer & Migration
+
 1\. Snowball (offline data transfer)
 	This is part of AWS's family of physical data-transfer services.
 	
@@ -53,7 +55,7 @@ This is the bridge btw on-premise data and cloud data. Could be for disaster rec
 
 Imagine a hospital in Lagos has applications that expect files or disks to be available inside its own data center. The hospital wants to store data in AWS without immediately rewriting those applications or changing every workflow.
 
-## Storage Gateway Types:
+## Storage Gateway Types: Cloud storage services
 
 1\. Amazon S3 File Gateway
 

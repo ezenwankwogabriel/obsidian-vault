@@ -20,15 +20,17 @@ It injects all the data, and stores the Data Lake in S3 which can manage securit
 
 Think of the services this way:
 
-|Service|Main job|
-|---|---|
-|Amazon S3|Stores the data|
-|AWS Lake Formation|Manages data lake setup and fine-grained permissions|
-|AWS Glue Data Catalog|Stores metadata describing datasets, tables, and schemas|
-|Amazon Athena|Queries data in S3 using SQL|
-|AWS Glue ETL|Extracts, transforms, and loads data|
+| Service               | Main job                                                 |
+| --------------------- | -------------------------------------------------------- |
+| Amazon S3             | Stores the data                                          |
+| AWS Lake Formation    | Manages data lake setup and fine-grained permissions     |
+| AWS Glue Data Catalog | Stores metadata describing datasets, tables, and schemas |
+| Amazon Athena         | Queries data in S3 using SQL                             |
+| AWS Glue ETL          | Extracts, transforms, and loads data                     |
 
 # Apache Flink (a support for apache Flink in AWS)
+
+A processing tool for kinesis data streams
 
 A framework designed to process streaming data in real-time.
 

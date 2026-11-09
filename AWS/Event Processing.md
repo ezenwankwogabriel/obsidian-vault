@@ -125,3 +125,18 @@ You can use an EFA on this also for improved performance
 ---
 # EC2 Instance High Availability
 
+---
+# Placement Group
+Determines how EC2 instances are physically positioned on AWS infrastructure.
+
+Goal is to control the trade-off btw performance, low network latency and availability.
+
+Types of placement group:
+1\. Cluster Placement Group
+AWS places instances close together within same AZ
+
+2\. Spread Placement group
+AWS places instances on distinct underlying hardware, spreading them across separate racks
+
+3\. Partition placement group
+AWS divides instances into logical partitions. Each having its own set of racks, no two partitions share same racks

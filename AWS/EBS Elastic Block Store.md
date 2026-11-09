@@ -67,6 +67,24 @@ High IOPS: the librarian retrieves 10,000 books per second (Many more requests h
 *only gp2/gp3 and io 1/io 2 can be used as boot volumes (i.e where root OS is running)* [the SSD candidates].
 The EBS volumes are characterized in Size|Throughput|IOPS (I/O Ops per sec)
 
+### Here is a list of important information about EBS Volumes:
+- When you create an EBS volume in an Availability Zone, it is automatically replicated within that zone to prevent data loss due to a failure of any single hardware component.
+	important: this replication is not a backup. If you have corrupted data, it'd also be reflected in the replicated storage
+
+- An EBS volume can only be attached to one EC2 instance at a time.
+
+- After you create a volume, you can attach it to any EC2 instance in the same Availability Zone
+
+- An EBS volume is off-instance storage that can persist independently from the life of an instance. You can specify not to terminate the EBS volume when you terminate the EC2 instance during instance creation.
+
+- EBS volumes support live configuration changes while in production which means that you can modify the volume type, volume size, and IOPS capacity without service interruptions.
+
+- Amazon EBS encryption uses 256-bit Advanced Encryption Standard algorithms (AES-256)
+
+- EBS Volumes offer 99.999% SLA.
+
+io2 Block Express is the provisioned-IOPS tier built for exactly this: tens of thousands of sustained IOPS at sub-millisecond latency with the 99.999% durability SLA. gp3 tops out at 16,000 IOPS per volume, so it cannot meet the number. st1 is a throughput-oriented HDD and is not even permitted as a boot volume. Instance store delivers high raw IOPS but is **ephemeral** — stopping or terminating the instance destroys the data, which fails the durability requirement outright.
+
 
 ### EBS Multi-Attach - io 1 / io 2 family
 allows you to attach same EBS volume to multiple EC2 instances in same AZ

@@ -64,6 +64,34 @@ If with the above, you now grant an IAM Permission through "IAM Policy" for this
 
 The above results to "No Permission" as the user permission only grants the user S3 & CloudWatch
 
+#### note that permission boundaries apply to "deveoper's IAM user" and can be used as an IAM Policy condition
+### 1. Permissions boundary attached to a developer's IAM user
+
+Use case: Restrict what a developer can do, regardless of how many permissions their identity policies grant.
+
+Example: A developer's IAM policy grants AdministratorAccess, but their permissions boundary only allows EC2, S3 read access and CloudWatch.
+
+They cannot perform IAM administration or delete S3 buckets.
+
+Think: Restrict the developer's own maximum permissions.
+
+### 2. `iam:PermissionsBoundary` condition in an IAM policy
+
+Use case: Ensure developers cannot create IAM roles without an approved permissions boundary.
+
+Example: Developers can create application roles, but every role must have the company's `DeveloperBoundary` attached.
+
+- Create role with approved boundary → Allowed.
+    
+- Create role without a boundary → Denied.
+    
+- Create role with a different boundary → Denied.
+    
+
+Think: Control the permissions boundary developers must attach to roles they create.
+
+The difference: The first restricts what a developer can do. The second controls the boundaries developers must apply to IAM identities they create.
+
 ---
 ## IAM Identity Center
 A service that lets employees sign in once, and access the AWS accounts & apps they have permissions to use. One log in for all your AWS account in AWS organizations.

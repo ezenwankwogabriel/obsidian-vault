@@ -3,7 +3,7 @@ Postgres, MySQL, MariaDB, Oracle, Microsoft SQL server, IBM DB2, Aurora (AWS Pro
 
 Why RDS vs DB on EC2
 - Automated provisioning, OS patching
-- Continous backup and restore to specific timestamp (Point in Time Restore)
+- Continuous backup and restore to specific timestamp (Point in Time Restore)
 - Monitoring dashboard
 - Read replicas for improved read performance
 - Multi AZ setup for Disaster Recovery (DR)
@@ -33,13 +33,40 @@ just click on "modify" for the db:
 	sync is established between the db
 
 ## RDS Custom
-	managed oracle & microsoft sql server db with OS and db customization
-	the custom gives you access to the underlying db and OS for:
-		configuring settings
-		install patches
-		enable native features
-		access ec2 instance using ssh / ssm session manager
-	To perform customization, de-activate Automatic Mode (better to take a snapshot for easy restoration)
+A managed db service giving you more control over the underlying db env, including the OS and db config.
+
+Think this a middle ground for RDS and managing db on EC2
+
+The custom gives you access to the underlying db and OS for:
+	configuring settings
+	install patches
+	enable native features
+	access ec2 instance using ssh / ssm session manager
+
+To perform customization, de-activate Automatic Mode (better to take a snapshot for easy restoration)
+
+```
+
+Standard Amazon RDS
+AWS manages most infrastructure
+- AWS manages the OS.
+- AWS manages database installation and routine maintenance.
+- Limited access to underlying environment.
+
+
+Amazon RDS Custom
+More customization
+- Access to the underlying EC2 instance and OS.
+- Can modify database and OS configurations.
+- AWS still provides managed database capabilities.
+
+
+Database on EC2
+Maximum control
+- You manage the OS.
+- You install and configure the database.
+- You manage backups, patching, recovery and maintenance.
+```
 
 ### RDS vs RDS Custom
 RDS: entire db and OS is managed by AWS
@@ -61,8 +88,10 @@ High Availability and Read Scaling
 		Gives 1 master (write) and up 10 15 read replicas
 
 #### Aurora keeps your db highly available within same Region (diff AZ)
-#### Aurora Global DB keeps your db available across multiple region, especially for recovery and global distributed reads. 
+#### Aurora Global DB:
+keeps your db available across multiple region, especially for recovery and global distributed low-latency reads. 
 
+Think of it as one primary database in one Region, with secondary read-only database clusters in other Regions.
 #### Multi AZ protects against instance or AZ failures within a Region
 
 Aurora DB Cluster

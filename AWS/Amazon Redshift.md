@@ -1,4 +1,4 @@
-A managed cloud data warehouse designed for large-scale analytics using SQL
+A fully managed cloud data warehouse designed for large-scale analytics using SQL
 
 Concept
 - RDS runs d database behind your app
@@ -48,13 +48,13 @@ Snapshots are incremental, (only what has changed is saved)
 
 ## Automated vs manual snapshots
 
-|Feature|Automated|Manual|
-|---|---|---|
-|Created by|AWS|You or your automation|
-|Purpose|Routine recovery|Important milestones or long-term retention|
-|Default retention|1 day|Indefinite|
-|Deleted when cluster is deleted|Yes, for automated snapshots|No, normally retained|
-|Can control retention?|Yes|Yes|
+| Feature                         | Automated                    | Manual                                      |
+| ------------------------------- | ---------------------------- | ------------------------------------------- |
+| Created by                      | AWS                          | You or your automation                      |
+| Purpose                         | Routine recovery             | Important milestones or long-term retention |
+| Default retention               | 1 day                        | Indefinite                                  |
+| Deleted when cluster is deleted | Yes, for automated snapshots | No, normally retained                       |
+| Can control retention?          | Yes                          | Yes                                         |
 Exam trap: If you want to preserve a particular automated snapshot beyond its normal retention period or cluster lifecycle, copy it to a manual snapshot.
 ### Loading data into Redshift [large inserts are preferred]
 - Amazon Kinesis Data Firehose
@@ -73,6 +73,10 @@ The question is: "what network path does that data take"
 Without Enhanced VPC Routing enabled in Redshift, COPY and UPLOAD traffic doesn't follow your VPC route tables/security groups/network ACLs in same way traffic routed through your VPC would. 
 Enhanced VPC routing forces COPY and UPLOAD traffic through the VPC. You still need to configure the necessary routes and connectivity though to prevent these from going through the internet
 ### Redshift Spectrum
-This is needed for when you have large data to be analyzed but you don't want to load it into S3 just yet.
-For this you must already have a Redshift cluster available to start the query
-The query is then submitted to thousands of Redshift Spectrum nodes who would read the data (maybe from S3) 
+Allows you run SQL queries against data stored directly in Amazon S3, without first loading that data to Redshift tables.
+
+### Data Lake vs Data Warehouse
+The fundamental difference:
+
+- Data Lake: Stores large volumes of raw data in its original format, whether structured, semi-structured or unstructured.
+- Data Warehouse: Stores processed, structured and organized data optimized for analytics and reporting.

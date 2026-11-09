@@ -1,10 +1,10 @@
 # AWS CloudFormation — SAA-C03
 
-Infrastructure as code (no resources manually created)
+Infrastructure as code (IaC) (no resources manually created)
 
 Think of AWS CloudFormation as infrastructure defined in code. 
 
-Instead of manually creating a VPC, subnets, EC2 instances, security groups, and load balancers in the AWS Console, you describe the resources in a template. CloudFormation provisions and manages them for you.
+Instead of manually creating AWS Resources like a VPC, subnets, EC2 instances, security groups, and load balancers in the AWS Console, you describe the resources in a template. CloudFormation provisions and manages them for you.
 
 Since you're learning ECS, imagine needing the same application infrastructure in development, staging, and production. CloudFormation helps you reproduce that infrastructure consistently.
 
@@ -82,6 +82,70 @@ Also gives users ability to carry out these create/update/delete actions to the 
  
  The user must have the permission "iam:PassRole"
 
+### How does CloudFormation know what to create first?
+CloudFormation analyses dependencies between resources and creates them in a valid order.
+
+Suppose you're creating an EC2 instance that needs a security group, The group must exist before the instance can reference it. 
+
+### How does CloudFormation know that a task is done and ready for next
+- CreationPolicy: Tells CloudFormation to wait for a specified number of success signals
+- cfn-signal: A helper script that sends a success or failure signal to CloudFormation
+
+The creation policy is invoked only when AWS CloudFormation creates the associated resource. Currently, the only AWS CloudFormation resources that support creation policies are `AWS::AutoScaling::AutoScalingGroup`, `AWS::EC2::Instance`, and `AWS::CloudFormation::WaitCondition`.
+
+Use the **CreationPolicy** attribute when you want to **wait** on resource configuration actions before stack creation proceeds. For example, if you install and configure software applications on an EC2 instance, you might want those applications to be running before proceeding. In such cases, you can add a `CreationPolicy` attribute to the instance and then send a success signal to the instance after the applications are installed and configured.
+
+The instance sends the success signal only after its configuration script has finished successfully.
+
+```
+Resources:
+  ActiveDirectory:
+    Type: AWS::EC2::Instance
+
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT45M
+```
+This tells CloudFormation:
+- Expect one success signal
+- Wait for up to 45 minutes for it
+
+Inside the EC2 instance, your configuration script might execute:
+```
+# Install and configure Active Directory
+Install-WindowsFeature AD-Domain-Services
+
+# Perform domain controller configuration
+# ...
+
+# Signal success only after configuration succeeds
+cfn-signal.exe -e $LASTEXITCODE `
+  --stack SharePointStack `
+  --resource ActiveDirectory `
+  --region us-east-1
+```
+
+Other important concepts in the CloudFormation 
+
+| CloudFormation feature | What it guarantees                                                                              |
+| ---------------------- | ----------------------------------------------------------------------------------------------- |
+| `DependsOn`            | Resource creation order (create dependent first)                                                |
+| `CreationPolicy`       | Waits for successful signals before marking a resource created                                  |
+| `cfn-signal`           | Sends the success/failure signal                                                                |
+| `WaitCondition`        | Pauses stack progress until an external signal arrives                                          |
+| UpdatePolicy           | Controls how certain resources are updated                                                      |
+| DeletionPolicy         | Controls what happens to a resource after it's removed from a stack / the stack is deleted      |
+| UpdateReplacePolicy    | Controls what happens to the old physical resource when a stack update requires its replacement |
+Also Remember:
+
+| Helper     | Purpose                                                                  |
+| ---------- | ------------------------------------------------------------------------ |
+| UserData   | Runs boot-time scripts(a script passed to the instance when it launches) |
+| cfn-init   | Configures EC2 using template metadata                                   |
+| cfn-signal | Reports success or failure                                               |
+| cfn-hup    | Detects changes to instance metadata and runs configured hooks           |
+
 ## 4. Why use CloudFormation?
 
 Suppose you need to create the same architecture in three environments.
@@ -109,6 +173,31 @@ CloudFormation helps improve consistency and repeatability. It does not automati
 | Terraform         | Infrastructure as code across AWS and other supported providers                             |
 
 Exam clue: If a question asks how to create and manage a repeatable collection of AWS resources using declarative YAML or JSON, choose CloudFormation
+
+---
+# Circular deps in CloudFormation
+A Circular dependency happens when two or more resources depend on each other in a way that makes cloudFormation unable to determine which resource to create first.
+
+If Resource A needs Resource B to exist first, and Resource B also needs A to exist first, neither can be created
+
+Example: Imagine you have two resources
+- An EC2 instance
+- A security group
+You want the EC2 instance to use the security group.
+But suppose you also configure the security group to reference the EC2 instances private IP in one of its ingress rule
+```
+EC2 Instance
+    |
+    | Requires
+    v
+Security Group
+    |
+    | Requires EC2's private IP
+    v
+EC2 Instance
+```
+
+A ref/Sub is used in this case to refer to the entity being referend
 
 ---
 ### Terraform

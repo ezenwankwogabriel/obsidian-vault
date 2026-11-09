@@ -97,3 +97,7 @@ It does not turn dynamoDB streams into a kinesis Data stream nor replace the sou
 | How can I build a KCL-based consumer for DynamoDB Streams?                   | DynamoDB Streams Kinesis Adapter                                                                                                  |
 | How does KCL coordinate workers and track progress?                          | DynamoDB metadata table, leases, and checkpoints                                                                                  |
 | How do I retain change records longer than 24 hours?                         | Consider a different streaming/archival design, such as forwarding records to Kinesis Data Streams or another durable destination |
+
+This is a common exam distinction:
+- Push model: EventBridge invokes Lambda when an event occurs.
+- Poll model: Lambda event source mapping polls a stream or queue and invokes Lambda.

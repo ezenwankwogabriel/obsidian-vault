@@ -43,13 +43,24 @@ Origin: The source of the original content
 By having contents globally, it gives us DDoS protection
 
 ## Securing CloudFront & S3
-	 Origin Access Control
-		 Allows CloudFront to make authenticated requests to an S3 origin. 
-		 You configure a bucket policy to allow intended CloudFront distribution access the object
-		 This keeps bucket private while serving content. 
-		 OAC is recommended over the older Origin Access Identity (OAI)
+### Origin Access Identity
+	Is an identity that cloudFront uses to access a private s3 bucket
+	Imagine:
+		- you store images in s3 bucket
+		- cloudfront delivers them to website visitors
+		- you don't want users accessing the s3 bucket directly
+	You create an OAI and grant it permission to read objects in your S3 bucket. Only Cloudfront, through OAI, can access the protected content.
+	
+### Origin Access Control
+	Provides a more flexible and secure way for Cloudfront to access S3.
+	Uses signature version 4 (sigv4) to sign requests sent to s3 origin.
 		
-		Exam clue: “Serve private S3 content through CloudFront without making the bucket public” → choose Origin Access Control (OAC).
+	 You configure a bucket policy to allow intended CloudFront distribution access the object
+		 This keeps bucket private while serving content. 
+		 
+	 *key*: OAC is recommended over the older Origin Access Identity (OAI)
+		
+	Exam clue: “Serve private S3 content through CloudFront without making the bucket public” → choose Origin Access Control (OAC).
 	
 	Signed URLs vs signed cookies
 		These control who can access private content through CloudFront
@@ -132,5 +143,13 @@ use-cases:
 - Global gaming application
 - Multi-Region application: you have an app in two region, if primary is unhealthy, global accelerator can redirect traffic to another region, subject to health checks
 - static IP requirements: Your customers need to allow fixed IP addresses in their firewalls. Global Accelerator provides two which remain same anywhere you go
+
+In Global Accelerator, there are three concepts:
+
+| Term           | Meaning                                                                     |
+| -------------- | --------------------------------------------------------------------------- |
+| Accelerator    | The global entry point with two static IP addresses                         |
+| Endpoint group | A regional collection of endpoints (scoped per region)                      |
+| Endpoint       | The actual resource receiving traffic, such as an ALB (scoped per AZ kinda) |
 
 

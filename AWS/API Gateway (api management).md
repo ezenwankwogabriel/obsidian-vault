@@ -43,7 +43,7 @@ The API is accessible through an interface VPC endpoint powered by AWS PrivateLi
 1\. User Authentication through
 	IAM Roles (useful for internal apps)
 	Cognito (identity for external users)
-	Custom Authorizer (your own logic)
+	Lambda Custom Authorizer (your own logic/external auth)
 2\. Custom Domain Name HTTPs security through integration with AWS Certificate Manager (ACM)
 	If using Edge-optimized endpoint, certificate must be in us-east-1
 	If using Regional endpoint, certificate must be in the API Gateway region

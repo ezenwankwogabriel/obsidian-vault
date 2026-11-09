@@ -72,13 +72,28 @@ Defines how Route 53 responds ot DNS queries
 		Having a healthcheck on a primary, designate a Disaster Recovery Secondary. If the primary fails, Route53 failsover to the secondary
 		you should have these healthchecks setup first in Route53 -> Health check
 
-	Geolocation Policy (closest to location)
+	Geolocation Policy: Routes based on where the user is located. You define geographical locations and specify which resource should receive traffic from each region.
+		You decide where users from particular places should go
+		
+		ex:
+		Imagine you operate banking app in 3 resources (Tokyo, Sydney, London).
+		And intend to route specific locations to a particular resource destination.
+		you configure these rules explicitly in route53. it doesn't decide which endpiont is closest. It follows your geographic mapping
 
 	Geoproximity (bias control)
 		Allows route traffic to resources based on geographical location of users & resources
 		Ability to shift more traffic to resources based on the defined bias
 		if you want more traffic to resource > expand bias (1-99) or shrink to reduce traffic
 		Resources here can be AWS Resources & non AWS resources. The Advanced Traffic flow feature must be used for this
+			AWS calculates which endpoint should serve users based on geographic proximity, and you can influence the calculation using bias
+			
+		example:
+		Imagine you have two apps in Tokyo and Sydney
+		You'd like users to be routed based on how geographically close they are to these deployments
+		
+		Route 53 calculates the geographic areas served by each endpoint. You can adjust the boundaries using bias. 
+		The bias comes in to add more requests to a particular resource beyond it's calculated geographic areas.
+		SEtting the bias increases the resource geographic coverage
 
 	IP Based Policy
 		routing based on clients IP address
@@ -100,3 +115,21 @@ Route 53 resolver endpoints allow DNS queries travel between your AWS VPC and yo
 This is a a DNS gateway between AWS and your own data center.
 	Inbound endpoint: Your on-premise ntw sends queries to AWS so it can resolve private DNS name inside your VPC
 	Outbound endpoint: Resources in your VPC send DNS queries to your on-premise DNS servers, typically through Resolver forwarding rules
+
+### Active-Active vs Active-Passive
+
+These describe how your resources handle traffic.
+
+| Configuration  | How it works                                                 | Availability                                  |
+| -------------- | ------------------------------------------------------------ | --------------------------------------------- |
+| Active-Active  | Multiple resources serve traffic simultaneously              | Both/all resources are actively serving users |
+| Active-Passive | Primary resource serves traffic; secondary waits for failure | Secondary takes over when primary fails       |
+
+Here are practical examples of the four Route 53 DNS options:
+
+|Option|Practical example|
+|---|---|
+|Public Hosted Zone|You own `mycompany.com`. Anyone on the internet can resolve `api.mycompany.com` to your public load balancer IP/address.|
+|Private Hosted Zone|Your internal application resolves `db.internal` to `10.0.2.15`. Only associated VPCs can resolve it.|
+|Inbound Resolver Endpoint|Your company has an on-premises data centre. Its DNS server needs to resolve `app.internal`, which is hosted in AWS.|
+|Outbound Resolver Endpoint|An EC2 instance in AWS needs to resolve `employee.company.local`, which is managed by your on-premises DNS server. AWS forwards the query to that server.|

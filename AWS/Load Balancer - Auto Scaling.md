@@ -1,16 +1,27 @@
 A load balancer doesn't auto create more servers. You can combine it with an Auto Scaling Group to add and remove EC2 instances based on demand
 
 Types of Load Balancers
-- Application LB (ALB)
-	- Understands HTTP(S) rerquests and can route traffic based on URL path, hostname or HTTP headers
-- Network LB (NLB)
-	- Handles TCP, UDP, & TLS traffic at the transport layer, with very high performance & low latency
-	- example: a high throughput app requiring millions of connections / service using TCP
-	- cue: ultra low latency, static IP add, TCP/UDP traffic
-- Gateway LB (GLB)
-	- Distributes traffic to virtual network applicnaces, such as firewalls and intrusion detection systems
-	- example: send network traffic through multiple security appliances for security
-	- cue: third-party virtual app, firewall, transparent traffic inspection
+- Application LB (ALB): Handles HTTP and HTTP(S) traffic
+	- Path based routing (`/users, /orders`)
+	- Host-based routing (api.ex.com, admin.ex.com)
+	- Http headers & query-string routing
+	- Websocket support
+	- Redirects & fixed responses
+- Network LB (NLB): Handles TCP, UDP, & TLS traffic
+	- Very high performance and low latency
+	- Static IP add per AZ
+	- Supports Elastic IP assignment
+- Gateway LB (GLB): Deploys and scales virtual network appliances
+	- Firewall
+	- Intrusion detection/prevension ssytems
+	- Traffic and deep packet inspection
+	- uses GENEVE encapsulation
+
+	Typically designed to distribute application request across web servers. 
+
+	ex: imagine a company wants all incoming and outgoing traffic inspected by third-party firewalls
+	- Incoming traffic -> Gateway Endpoint -> Gateway Loadbalancer -> then distribute to firewalls and individually to destination
+
 - Classic LB (CLB)
 	- the older generation of AWS lb. supports basic layer 4 & 7 load balancing
 	- cue: legacy app

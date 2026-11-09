@@ -113,7 +113,7 @@ If the DB engine is different, you'd need a Schema Conversion Tool (SCT) for it 
 
 ---
 # AWS RDS and Aurora Migrations
-Key is to distinguish migrating a db, upgrading its engine, or moving it to another aWS Regions and switch btw MySQL and Aurora. 
+Key is to distinguish migrating a db, upgrading its engine, or moving it to another AWS Regions and switch btw MySQL and Aurora. 
 
 Scenario A –– RDS MySQL to RDS MySql
 This is same db engine. Common choice includes:
@@ -137,6 +137,12 @@ scenario D –– External MySQL to Aurora MySQL
 	Option 2
 		Create an Aurora MySQL Db
 		Use mysqldumb utility to migrate (slower than s3 method)
+
+Useful rules:
+- Snapshot/backup: Best when you can tolerate downtimes / creating a copy at a point in time
+- Replication: when you want destination synced before switching over
+- AWS DMS: for moving data between supported db, expecially when downtime must be minimal
+- SCT: helps convert schema and db code when changing 
 
 ---
 # On Premise strategy with AWS

@@ -45,4 +45,5 @@ To build apps with real time personalized recommendations. Same tech used by ama
 
 Textract
 Extract text, handwriting and data from any scaned documents using AI and ML. data from phones, IDs, ...
- 
+
+![[Pasted image 20261102063254.png]]

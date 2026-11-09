@@ -14,7 +14,8 @@ protects data while it travels from one place to another across a network
 Examples: HTTPS using TLS btw a browser and an application or TLS btw an application and a db
 
 ### Encryption in use
-protects data while it is being processed, for example using confidential computing or certain memory-encryption capabilities.
+protects data while it is being processed
+Example: A database processes sensitive patient information while protecting it from unauthorised access to memory.
 
 ---
 ## AWS KMS (key manaement service)
@@ -32,30 +33,46 @@ KMS can be used seamlessly in most AWS services
 	- Two keys for encryption and decryption
 	- You can download the public key out of KMS but can't access the private key
 	- use-case: encryption outside of AWS by users who can't call the KMS API
-- HMAC key
-	- Generate & verify message authentication codes
+- HMAC (hash-based message authentication code) key
+	- Generate & verify message authentication codes (a hash key)
 	- use-case: verify data authenticity and integrity
 
 ### KMS Key Types
-1\. AWS Owned Keys (free). 
+1\. AWS Owned Keys (free)
 	This is the default key. AWS owns and operates these keys for integrated services.
 	They are not managed by you as individual keys in your account
 
+	They are used behind the scenes by AWS services to protect customer data without expsing those keys in your AWS account.
+
 	use-case: think => least customer key-management overhead
+		Imagine you use an AWS "service" that encrypts data using AWS-owned KMS keys.
+	
+	Example: S3 uses AWS-owned keys as part of its SSE-S3 encryption mechanism.
+	You don't need to create a KMS key or manage anything.
+	
+	You cannot view them in kms console
+	Cannot modify their policies / configure their rotation
 
 2\. AWS Managed Key (free)
 	AWS manages the key in your account for a particular service. These commonly have aliases beginning with "aws/" follwed by the service they manage. such as "aws/S3"
 
 	use-case: think => convenient service-specific KMS encryption
+	For example, when you use SSE-KMS with S3 and don't specify your own KMS key, S3 can use:
+	`alias/aws/s3`
+	
+	You can view your key in kms console, see it's key id and meta, and view usage in CloudTrail activity
+
+Both owned and managed keys are managed by AWS
 
 3\. Customer managed KMS keys
+	A KMS key that you control.
 	You manage key policy, permissions, enabled state, deletion, ...	
 	costing $1 per month
 
 	use-case: think => greater control, auditability, and configuration responsibility
 
-AWS key rottation
-- AWS-managed kMS key: automatic every 1 year (rotated)
+AWS key rotation
+- AWS-managed KMS key: automatic every 1 year (rotated)
 - Customer managed KMS key (must be enabled): could either be automatic or on-demand
 - Imported KMS key: only manually managed requiring an alias
 
@@ -138,20 +155,73 @@ And an IAM role with "kms:Decrypt" for the source KMS key and "kms:Encrypt" for 
 ## Encrypted AMI Sharing Process
 Sharing AMI with another account when the AMI has been encrypted with a KMS key
 
-You have AMI encrypted in Account A, how do you launch an EC2 instance in Account B with the AMI from Account A
-
 >NB: Sharing an encrypted AMI is different from using a multi-region KMS key. You don't normally need multi-Region key to share an AMI between accounts in same Region
 
-1\. Must modify the AMI property with a launch permission . 
-	The launch permission allows account B to launch this AMI
-	This is effectively how you share an AMI (must update the launch permission)
-2\. Since this is encrypted by KMS, they also need to share the KMS key for account B to use
-	This is done with Key Policy. 
-3\. In account B, create an IAM role/user with enough permissions to use both the KMS key and the AMI. giving access on kms to "DescribeKey, ReEncrypted, CreateGrant & Decrypt" API Calls
-4\. Once done, you launch the EC2 instance from that AMI. Optionally re-encrypt everything on the target account with its own KMS key in its own account, to re-encrypt the volume
-You must first modify the image attribute/permission to add a Launch Permission which corresponds to the specific target AWS account (this is how you share an AMI)
+Imagine:
+- Account A: owns an EC2 instance & creates an encrypted AMI from it.
+- Account B: wants to launch its own EC2 instance using that AMI
 
-Then you would share the KMS keys for Account B to be able to use it. Done with a Key Policy. Then in Account B you would create IAM Role/user to use both the KMS key and the AMI
+Account A has:
+- An AMI called *company-golden-ami*
+- An encrypted EBS root volume
+- A customer-managed KMS key called alias/account-a-key
+
+Account B wants to use that AMI. This happens in two independent permission checks
+
+1\. Share the AMI using launch permissions
+An AMI has an attribute called launch permission. 
+For example:
+- Account A: `111111111111`
+- Account B: `222222222222`
+
+Account A modifies the AMI's launch permissions to include Account B's account ID
+```
+AMI: company-golden-ami
+
+Launch permissions:
+- Account A: Owner
+- Account B: 222222222222
+```
+
+Now, Account B can see and use the shared AMI, subject to the remaining permissions.
+*important:* this doesn't grant access to the encrypted EBS snapshot's kms key
+
+2\. Share the KMS key
+Now consider the encryption for the EBS used in the AMI
+The AMI references EBS snapshots encrypted using Account A's customer-managed kms key
+
+Account B tries to launch an EC2 instance, AWS needs to access the encrypted snapshot data to create the new EBS volume. But the encryption key belongs to account A. Hence Account B cannot use it.
+
+Account A must modify the KMS key policy to allow Account B use the key.
+```
+{
+  "Effect": "Allow",
+  "Principal": {
+    "AWS": "arn:aws:iam::222222222222:root"
+  },
+  "Action": [
+    "kms:Decrypt",
+    "kms:DescribeKey",
+    "kms:ReEncrypt*",
+    "kms:CreateGrant"
+  ],
+  "Resource": "*"
+}
+```
+
+This illustrates a cross-account key-policy statement.
+
+3\. Configure IAM permission in Account B
+Even though Account A's kms key policy trust B, and B can see AMI for A, the user/role in Account B needs appropriate IAM permission
+
+Think this as: the launching user / role is authorized to use the shared key
+
+4\. Re-encrypt using Account B\s own KMS key
+This is optional but recommended
+
+
+NB: this most likely works for same region. for cross region, the encryption source for EBS must be using *customer-managed KMS key*. AWS managed keys like *aws/ebs* cannot be shared cross-account.
+
 
 ---
 ## SSM Parameter Store
@@ -312,7 +382,7 @@ The easiest way to remember the three is:
 # **AWS Artifact**
 Provides on-demand access to AWS security and compliance report, and access to certain agreements with aWS
 
-use-case: your auditor or customer requests evidence of AWS compliance with sttandards such as ISO 27001 or SOC
+use-case: your auditor or customer requests evidence of AWS compliance with standards such as ISO 27001 or SOC
 
 This is your go-to, central resource for compliance-related information that matters to you. It provides on-demand access to AWS’s security and compliance reports and select online agreements. Reports available in AWS Artifact include our Service Organization Control (SOC) reports, Payment Card Industry (PCI) reports, and certifications from accreditation bodies across geographies and compliance verticals that validate the implementation and operating effectiveness of AWS security controls. Agreements available in AWS Artifact include the Business Associate Addendum (BAA) and the Nondisclosure Agreement (NDA).
 
