@@ -46,7 +46,7 @@ If higher limit, open a support ticket
 ## Concurrency Settings
 1\. Unreserved Concurrency:
 Concurrency available to functions that havn't had concurrency reserved for them.
-Ex: if yoour account has 1000 concurrency quota, and other functions use 300, and you havn't reserved capacity for your function, the shared pool has 700 left
+Ex: if your account has 1000 concurrency quota, and other functions use 300, and you havn't reserved capacity for your function, the shared pool has 700 left
 
 2\. Reserved Concurrency:
 Reserves capacity for a particular function & set its max concurrency
@@ -98,7 +98,7 @@ CloudFront provides two types:
 			Viewer Response: before CloudFront forwards response to the viewer
 		
 	Lambda@Edge:
-		more powerfule code for complex request & response processing @ edge
+		more powerful code for complex request & response processing @ edge
 		(adjust cpu/memory, network access, 3rd party libaries, file system access)
 		written in Nodejs or Python
 		scales to 1000s of request/second

@@ -64,7 +64,7 @@ If with the above, you now grant an IAM Permission through "IAM Policy" for this
 
 The above results to "No Permission" as the user permission only grants the user S3 & CloudWatch
 
-#### note that permission boundaries apply to "deveoper's IAM user" and can be used as an IAM Policy condition
+#### note that permission boundaries apply to "developer's IAM user" and can be used as an IAM Policy condition
 ### 1. Permissions boundary attached to a developer's IAM user
 
 Use case: Restrict what a developer can do, regardless of how many permissions their identity policies grant.

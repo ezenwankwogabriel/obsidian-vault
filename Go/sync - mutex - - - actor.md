@@ -22,7 +22,7 @@ var cache = map[string]string{}
 
 func Read(key string) string {
 	rw.Lock()
-	defer rw.Runlock()
+	defer rw.Unlock()
 	return cache[key]
 }
 ```

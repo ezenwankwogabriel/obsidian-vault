@@ -44,10 +44,14 @@ IAM Roles for Services
 - Some AWS Service will need to perform actions on your behalf
 - To do so, we assign permissions to AWS services with IAM Roles
 
-### IAM Security Tools
-- IAM Credentials Report (account-level)
+### IAM Security (auditing) Tools
+- IAM Credentials Report (account-level): Are our IAM users' credentials secure and properly managed?
+	- Audits IAM users' credential
+	- credential and authentication
 	- report lists all account's users and status of their credentials
-- IAM Access Advisor (user-level)
+- IAM Access Advisor (user-level): Which AWS services has this IAM identity actually accessed, and when?
+	- Shows services an IAM principal can access
+	- Permissions and service usage
 	- shows service permission granted to user and when those services were last accessed
 > IAM > Credential Report > Download credential report
 

@@ -38,7 +38,7 @@ Without context, you may need to define some other way to stop a running action.
 ### Things to remember
 - cancellation - stop work when the request is canceled
 - deadline/timeout - stop work if it takes too long
-- request-scoped values - carry things like request IDs through the call chain
+- request-scoped values - carry things like user-ids through the call chain
 
 ### Basic Idea
 imagine `Http request -> Handler -> Service -> Repository -> PostgreSQL`
@@ -137,7 +137,7 @@ You'd notice same ctx is passed round. Suppose postgresql is taking forever:
 client disconnects -> http context canceled -> ctx.Done() => QueryContext notices cancellation -> DB operation can terminate.
 
 ## One major rule
-Done create `context.Background` deep inside your application.
+Don't create `context.Background` deep inside your application.
 
 ### context.background()
 ctx := context.Background() // used at top of application (root of work, having an empty context)

@@ -13,7 +13,7 @@ Instead of relying only on what the model learned during training, RAG lets the 
    - The system searches the vector database for the most relevant chunks.
 
 3. **Augment**
-   - Those retrieved chunks are inserted intothe prompt given to the LLM.
+   - Those retrieved chunks are inserted into the prompt given to the LLM.
    - Example prompt:  
      *“Use the following context to answer the question: [retrieved text]. Question: …”*
 

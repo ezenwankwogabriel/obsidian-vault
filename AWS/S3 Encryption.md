@@ -93,7 +93,7 @@ What happens if you don't enable encryption manually?
 
 Since January 2023, Amazon S3 automatically applies SSE-S3 (server-side encryption with S3-managed keys) as the default for new object uploads.
 
-- S3 encrypts new objects by default. The default for general-purpose buckets is SSE-S3; you don't need to enable encryption manually for basic at-rest encryption.&#x20;
+- S3 encrypts new objects by default. The default for general-purpose buckets is SSE-S3; you don't need to enable encryption manually for basic at-rest encryption.
 
 - Encryption does not equal access control. An encrypted object can still be accessed by an authorised principal. Use IAM policies, bucket policies and appropriate access controls.
 
