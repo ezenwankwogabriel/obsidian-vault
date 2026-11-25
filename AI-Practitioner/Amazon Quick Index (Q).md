@@ -1,6 +1,6 @@
 A successor to Amazon Q Business.
-An agentic AI assistant for your employees: performs answer, research, analyze, act.
-	it connects your company's documents, app, db, and the internet so employees can easily navigate resources with added context of the internet
+AWS Gen-AI powered assistant to help users with business tasks, software development and data analysis
+	it uses FM and connects your company's documents, app, db, and the internet so employees can easily navigate resources with added context of the internet
 This is built on Amazon Bedrock
 
 You connect **Quick Index** to your companies data
